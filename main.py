@@ -1,27 +1,24 @@
 import sys
 import datetime
-from mpl_finance import candlestick2_ohlc
 import matplotlib.ticker as ticker
-import matplotlib.pyplot as plt
-from pandas_datareader import data
 import numpy as np
 import pandas as pd
-from trade.util.db_helper import *
-from ta.trend import IchimokuIndicator,RSIIndicator
 import matplotlib.dates as mdates
 from mplfinance.original_flavor import candlestick_ohlc
-from matplotlib import rc, font_manager
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
-
 from PyQt5.QAxContainer import *
-from PyQt5 import QtWidgets ,uic
+from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import *
 from PyQt5 import uic
 import models.favoriteList as FavoriteList
 import models.stockList as StockList
 import models.candleList as CandleList
+import models.subIndexList as SubIndexList
 import models.chartData as ChartData
+import models.subIndexData as SubIndexData
 
 
 def OnEventConnect(err_code):
@@ -44,6 +41,8 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
     stockList = stocklist.getList()
     candlelist = CandleList.CandleList()
     candleList = candlelist.getList()
+    subindexlist = SubIndexList.SubIndexList()
+    subIndexList = subindexlist.getList()
     chartData = ChartData.ChartData(kiwoom)
 
     selectedStock = "039490:삼성전기"
@@ -56,22 +55,22 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.ui = uic.loadUi("main.ui",self) #ui 파일 불러오기
         #종목 콤보박스 변경 이벤트 수신
-        self.cb_stockList.activated.connect(self.activated)
-        self.cb_stockList.currentTextChanged.connect(self.selectedStock)
+        self.cb_stockList.currentTextChanged.connect(self.selectStock)
         self.cb_stockList.addItems(self.stockList)
-        self.cb_candleList.activated.connect(self.activated)
-        self.cb_candleList.currentTextChange.connect(self.selectedCandle)
+        self.cb_candleList.currentTextChanged.connect(self.selectCandle)
         self.cb_candleList.addItems(self.candleList)
-        self.cb_subIndext.activated.connect(self.activated)
+        self.cb_subIndexList.currentTextChanged.connect(self.selectSubIndices)
+        self.cb_subIndexList.addItems(self.subIndexList)
 
         #차트 그리기
         df = self.requestChartData()
         #만약 보조지표를 선택하고 있을 경우
+        subIndex = SubIndexData.SubIndexData()
         for i in self.selectedSubIndices :
             if(i=="RSI") :
-                self.calc_RSI(df)
+                subIndex.calc_RSI(df)
             elif(i=="일목균형표") :
-                self.calc_ichimoku(df)
+                subIndex.calc_ichimoku(df)
 
         self.drawChart(df)
 
@@ -86,7 +85,9 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         time = now.strftime("%Y%m%d")
         interval = self.selectedCandle.split(" ")[0]
         type = self.selectedCandle.split(" ")[1]
-        df = self.chartData.requestTR(code,time,type,interval)
+        # df = self.chartData.requestTR(code,time,type,interval)
+        data = [[0,30000,30000,30000,30000,0,30000],[1,31050,31300,30650,30950,3567300,30950],[2,31550,32000,31100,31950,3898300,31950],[3,31800,32100,31550,31900,1913300,31900],[4,32150,32250,31500,31900,3487200,31900]]
+        df = pd.DataFrame(data,columns=['index','date','open','high','low','close','volume'])
         return df
 
     def drawChart(self,df):
@@ -94,6 +95,8 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         # 그래프 구역 나누기
         fig = plt.figure(figsize=(12, 8))
         fig.set_facecolor('w')
+        self.canvas = FigureCanvas(fig)
+        self.bx_chartArea.addWidget(self.canvas)
 
         gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
         axs = []
@@ -132,31 +135,19 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
                         color=color_list)
         # ----------------------------------------------------------------------------------#
         # 그래프 title 지정
-        title = self.selectedStock.split(":")[1]
-        ax.set_title(title, fontsize=22)
         # X축 티커 숫자 20개로 제한
         ax.xaxis.set_major_locator(ticker.MaxNLocator(10))
-        # # X축 라벨 지정
+        # X축 라벨 지정
         # bottom_axes.set_xlabel('Date', fontsize=15)
         ax.legend()
         plt.tight_layout()
-        plt.show()
 
-    def calc_ichimoku(self, df):
-        # 일목균형표 데이터 생성
-        id_ichimoku = IchimokuIndicator(high=df['high'], low=df['low'], visual=True, fillna=True)
-        df['span_a'] = id_ichimoku.ichimoku_a()
-        df['span_b'] = id_ichimoku.ichimoku_b()
-        df['base_line'] = id_ichimoku.ichimoku_base_line()
-        df['conv_line'] = id_ichimoku.ichimoku_conversion_line()
-        return df
-
-    def calc_RSI(self,df):
-        id_rsi = RSIIndicator(close=df['close'],fillna=True)
-        df['rsi'] = id_rsi.rsi()
-        return df
-
-
+    def selectStock(self,item):
+        self.selectedStock = item
+    def selectCandle(self,item):
+        self.selectedCandle = item
+    def selectSubIndices(self,item):
+        self.selectedSubIndices.append(item)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
@@ -165,7 +156,6 @@ if __name__ == '__main__':
     # kiwoom.OnEventConnect.connect(OnEventConnect)
     window = MainWindow(kiwoom)  # Window 클래스를 생성하여 Wondow 변수에 할당
     app.exec_()  # 메인 이벤트 루프에 진입 후 프로그램이 종료될 때까지 무한 루프 상태 대기
-
 
 
 # import sys

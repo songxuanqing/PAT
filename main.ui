@@ -60,16 +60,6 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QWidget" name="wg_chartArea" native="true">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>40</y>
-      <width>861</width>
-      <height>481</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QTableView" name="tbl_favoriteTable">
     <property name="geometry">
      <rect>
@@ -175,7 +165,7 @@
      <string>보조지표</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="cb_subIndex">
+   <widget class="QComboBox" name="cb_subIndexList">
     <property name="geometry">
      <rect>
       <x>570</x>
@@ -210,6 +200,17 @@
     <property name="orientation">
      <enum>Qt::Vertical</enum>
     </property>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>831</width>
+      <height>471</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="bx_chartArea"/>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

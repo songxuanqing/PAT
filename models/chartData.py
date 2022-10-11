@@ -12,7 +12,7 @@ class ChartData():
     def __init__(self,kiwoom):
         super().__init__()
         self.kiwoom = kiwoom
-        self.setSignalSlots()
+        # self.setSignalSlots()
 
     def getChartData(self):
         return self.arr
