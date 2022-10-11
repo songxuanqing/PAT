@@ -6,8 +6,8 @@ import pandas as pd
 import matplotlib.dates as mdates
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.gridspec as gridspec
 from PyQt5.QAxContainer import *
 from PyQt5 import QtWidgets, uic
@@ -47,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
 
     selectedStock = "039490:삼성전기"
     selectedCandle = "3 분"
-    selectedSubIndices = ["RSI","일목균형표"]
+    selectedSubIndices = ["일목균형표"]
 
 
     def __init__(self, kiwoom):  # Window 클래스의 초기화 함수(생성자)
@@ -66,13 +66,15 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         df = self.requestChartData()
         #만약 보조지표를 선택하고 있을 경우
         subIndex = SubIndexData.SubIndexData()
-        for i in self.selectedSubIndices :
-            if(i=="RSI") :
-                subIndex.calc_RSI(df)
-            elif(i=="일목균형표") :
-                subIndex.calc_ichimoku(df)
+        if len(self.selectedSubIndices)>1 :
+            for i in self.selectedSubIndices :
+                if(i=="RSI") :
+                    self.df = subIndex.calc_RSI(df)
+                elif(i=="일목균형표") :
+                    self.df = subIndex.calc_ichimoku(df)
 
-        self.drawChart(df)
+        print(self.df)
+        self.drawChart(self.df)
 
         #보조지표 선택에 변경이 있을 경우, df 데이터 변경?
 
@@ -86,8 +88,8 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         interval = self.selectedCandle.split(" ")[0]
         type = self.selectedCandle.split(" ")[1]
         # df = self.chartData.requestTR(code,time,type,interval)
-        data = [[0,30000,30000,30000,30000,0,30000],[1,31050,31300,30650,30950,3567300,30950],[2,31550,32000,31100,31950,3898300,31950],[3,31800,32100,31550,31900,1913300,31900],[4,32150,32250,31500,31900,3487200,31900]]
-        df = pd.DataFrame(data,columns=['index','date','open','high','low','close','volume'])
+        data = [[0,20180807,30000,30000,30000,30000,0,30000],[1,20180808,31050,31300,30650,30950,3567300,30950],[2,20180809,31550,32000,31100,31950,3898300,31950],[3,20180810,31800,32100,31550,31900,1913300,31900],[4,20180813,32150,32250,31500,31900,3487200,31900]]
+        df = pd.DataFrame(data,columns=['index','date','open','high','low','close','Adj','volume'])
         return df
 
     def drawChart(self,df):
@@ -96,6 +98,8 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         fig = plt.figure(figsize=(12, 8))
         fig.set_facecolor('w')
         self.canvas = FigureCanvas(fig)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.bx_chartArea.addWidget(self.toolbar)
         self.bx_chartArea.addWidget(self.canvas)
 
         gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
@@ -105,25 +109,25 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         for ax in axs:
             ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=range(1, 13)))
             ax.xaxis.set_minor_locator(mdates.MonthLocator())
-
-        # top_axes = plt.subplot2grid((4, 4), (0, 0), rowspan=3, colspan=4)  # 위 차트 = 캔들
-        # bottom_axes = plt.subplot2grid((4, 4), (3, 0), rowspan=1, colspan=4, sharex=top_axes) # 아래 차트 = 거래량
-        # bottom_axes.get_yaxis().get_major_formatter().set_scientific(False)
-
         # ax. 캔들 차트
         ax = axs[0]
         x = np.arange(len(df.index))
         ohlc = df[['open', 'high', 'low', 'close']].astype(int).values
         dohlc = np.hstack((np.reshape(x, (-1, 1)), ohlc))
         candlestick_ohlc(ax, dohlc, width=0.5, colorup='r', colordown='b')
+
         #if문으로 보조지표 선택시 차트 그리기
-        # ax. 일목균형차트
-        ax.plot(df.span_a, label='span_a', linestyle='solid', color='pink')
-        ax.plot(df.span_b, label='span_b', linestyle='solid', color='lightsteelblue')
-        ax.plot(df.base_line, label='base_line', linestyle='solid', color='green', linewidth=2)
-        ax.plot(df.conv_line, label='conv_line', linestyle='solid', color='darkorange')
+        if "일목균형표" in self.selectedSubIndices :
+            # ax. 일목균형차트
+            ax.plot(df.span_a, label='span_a', linestyle='solid', color='pink')
+            ax.plot(df.span_b, label='span_b', linestyle='solid', color='lightsteelblue')
+            ax.plot(df.base_line, label='base_line', linestyle='solid', color='green', linewidth=2)
+            ax.plot(df.conv_line, label='conv_line', linestyle='solid', color='darkorange')
+            ax.fill_between(df.index, df.span_a, df.span_b, alpha=0.3)
+        if "RSI" in self.selectedSubIndices :
+            ax.plot(df.rsi, label="rsi", linestyle="solid",color="red")
+
         ax.grid(True, axis='y', color='grey', alpha=0.5, linestyle='--')
-        ax.fill_between(df.index, df.span_a, df.span_b, alpha=0.3)
         ax.legend()
 
         # ax2. 거래량 차트
