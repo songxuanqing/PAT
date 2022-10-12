@@ -19,6 +19,7 @@ import models.candleList as CandleList
 import models.subIndexList as SubIndexList
 import models.kiwoomData as KiwoomData
 import models.subIndexData as SubIndexData
+import interface.observer as observer
 
 
 def OnEventConnect(err_code):
@@ -28,11 +29,15 @@ def OnEventConnect(err_code):
         print("fail")
 
 
-class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
+class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
     def __init__(self,kiwoom):  # Window 클래스의 초기화 함수(생성자)
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.kiwoom = kiwoom
+
+        self.is_completed = False
         arr = []
+
+
         # 저장소 생성
         # 저장소에서  최근 데이터 가져오기
 
@@ -47,10 +52,11 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         self.candleList = self.candlelist.getList()
         self.subindexlist = SubIndexList.SubIndexList()
         self.subIndexList = self.subindexlist.getList()
-        self.kiwoomData = KiwoomData.ChartData(kiwoom)
+        self.kiwoomData = KiwoomData.KiwoomData(kiwoom)
+        self.register_subject(self.kiwoomData)
 
         self.selectedStock = "039490:삼성전기"
-        self.selectedCandle = "3 분"
+        self.selectedCandle = "1 주"
         self.selectedSubIndices = ["일목균형표"]
 
         self.ui = uic.loadUi("main.ui",self) #ui 파일 불러오기
@@ -73,12 +79,19 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
                 elif(i=="일목균형표") :
                     self.df = subIndex.calc_ichimoku(df)
 
-        print(self.df)
-        self.drawChart(self.df)
+        self.drawChart(df)
 
-        #보조지표 선택에 변경이 있을 경우, df 데이터 변경?
-
+        #보조지표 선택에 변경이 있을 경우, df 데이터 변경
         self.ui.show()
+
+    def update(self, is_completed,data):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
+        self.is_completed = is_completed
+        self.dfFromModule = data
+
+
+    def register_subject(self, subject):
+        self.subject = subject
+        self.subject.register_observer(self)
 
     def requestChartData(self):
         #종목코드 가져오기
@@ -87,9 +100,13 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         time = now.strftime("%Y%m%d")
         interval = self.selectedCandle.split(" ")[0]
         type = self.selectedCandle.split(" ")[1]
-        # df = self.kiwoomData.requestTR(code,time,type,interval)
-        data = [[0,20180807,30000,30000,30000,30000,0,30000],[1,20180808,31050,31300,30650,30950,3567300,30950],[2,20180809,31550,32000,31100,31950,3898300,31950],[3,20180810,31800,32100,31550,31900,1913300,31900],[4,20180813,32150,32250,31500,31900,3487200,31900]]
-        df = pd.DataFrame(data,columns=['index','date','open','high','low','close','Adj','volume'])
+        self.kiwoomData.request_candle_data(code=code, date=time, nPrevNext=0, type=type,
+                            interval=interval)
+        while(self.is_completed == False):
+            print("대기중")
+
+        print("대기끝")
+        df = self.dfFromModule
         return df
 
     def drawChart(self,df):
