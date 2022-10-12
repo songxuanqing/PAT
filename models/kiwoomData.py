@@ -17,7 +17,7 @@ class KiwoomData(observer.Subject):
         super().__init__()
         self.kiwoom = kiwoom
         self._observer_list = []
-        self.calculator_list = {'date':[],'open':[],'high':[],'low':[],'close':[],'volume':[]}
+        self.calculator_list = {'index':[],'date':[],'open':[],'high':[],'low':[],'close':[],'volume':[]}
         self.calculator_event_loop = QEventLoop()
 
         # 화면 번호
@@ -122,7 +122,7 @@ class KiwoomData(observer.Subject):
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "고가")
                 low = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "저가")
-
+                self.calculator_list['index'].append(i)
                 self.calculator_list['date'].append(date)
                 self.calculator_list['open'].append(int(open))
                 self.calculator_list['high'].append(int(high))
@@ -136,9 +136,10 @@ class KiwoomData(observer.Subject):
         #     self.request_candle_data(code=self.code, date=self.time, nPrevNext=2, type=self.type,
         #                 interval=self.interval)
         # else:
-            df = pandas.DataFrame(self.calculator_list,
-                                  columns=['date', 'open', 'high', 'low', 'close', 'volume'])
             self.calculator_event_loop.exit()
+            df = pandas.DataFrame(self.calculator_list,
+                                  columns=['index','date', 'open', 'high', 'low', 'close', 'volume'])
+            df.set_index("index",inplace=True)
             self.is_completed_request = True
             self.notify_observers(df)
             print(df)

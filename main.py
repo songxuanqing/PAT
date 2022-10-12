@@ -13,6 +13,7 @@ from PyQt5.QAxContainer import *
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import *
 from PyQt5 import uic
+import models.accountData as AccountData
 import models.favoriteList as FavoriteList
 import models.stockList as StockList
 import models.candleList as CandleList
@@ -20,6 +21,7 @@ import models.subIndexList as SubIndexList
 import models.kiwoomData as KiwoomData
 import models.subIndexData as SubIndexData
 import interface.observer as observer
+
 
 
 def OnEventConnect(err_code):
@@ -46,6 +48,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.favoriteList = FavoriteList.FavoriteList()
         self.favoriteList.setList(arr)
 
+        self.accountData = AccountData.AccountData(kiwoom)
+        self.accountBalanceInfo = self.accountData.getBalanceInfo()
         self.stocklist = StockList.StockList(kiwoom)
         self.stockList = self.stocklist.getList()
         self.candlelist = CandleList.CandleList()
@@ -55,9 +59,9 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.kiwoomData = KiwoomData.KiwoomData(kiwoom)
         self.register_subject(self.kiwoomData)
 
-        self.selectedStock = "039490:삼성전기"
-        self.selectedCandle = "1 주"
-        self.selectedSubIndices = ["일목균형표"]
+        self.selectedStock = "005930:삼성전자"
+        self.selectedCandle = "1 일"
+        self.selectedSubIndices = ["RSI"]
 
         self.ui = uic.loadUi("main.ui",self) #ui 파일 불러오기
         #종목 콤보박스 변경 이벤트 수신
@@ -68,6 +72,9 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.cb_subIndexList.currentTextChanged.connect(self.selectSubIndices)
         self.cb_subIndexList.addItems(self.subIndexList)
 
+        #계정 잔고 정보 나타내기
+        self.displayBalanceTable()
+
         #차트 그리기
         df = self.requestChartData()
         #만약 보조지표를 선택하고 있을 경우
@@ -75,9 +82,9 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         if len(self.selectedSubIndices)>1 :
             for i in self.selectedSubIndices :
                 if(i=="RSI") :
-                    self.df = subIndex.calc_RSI(df)
+                    df = subIndex.calc_RSI(df)
                 elif(i=="일목균형표") :
-                    self.df = subIndex.calc_ichimoku(df)
+                    df = subIndex.calc_ichimoku(df)
 
         self.drawChart(df)
 
@@ -93,6 +100,37 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.subject = subject
         self.subject.register_observer(self)
 
+    def displayBalanceTable(self):
+        print("account"+str(self.accountBalanceInfo))
+
+        nRows = len(self.accountBalanceInfo.index)
+        nColumns = len(self.accountBalanceInfo.columns)
+        self.tbl_totalBalance.setRowCount(nRows)
+        self.tbl_totalBalance.setColumnCount(nColumns)
+        # self.setItemDelegate(FloatDelegate())
+
+        for i in nRows:
+            for j in nColumns:
+                x = '{:.3f}'.format(self.df.iloc[i, j])
+                self.setItem(i, j, QtWidgets.QTableWidgetItem(x))
+
+        # horHeaders = []
+        # numRow = 0
+        # for n, key in enumerate(sorted(self.accountBalanceInfo.keys())):
+        #     horHeaders.append(key)
+        #     for m, item in enumerate(self.accountBalanceInfo[key]):
+        #         numRow = numRow+1
+        #         newitem = QtWidgets.QTableWidgetItem(item)
+        #         self.tbl_totalBalance.setItem(m, n, newitem)
+
+        # self.tbl_totalBalance.setHorizontalHeaderLabels(horHeaders)
+        # self.tbl_totalBalance.resize(290, 290)
+        # self.tbl_totalBalance.setRowCount(numRow)
+        # self.tbl_totalBalance.setColumnCount(7)
+        self.tbl_totalBalance.resizeColumnsToContents()
+        self.tbl_totalBalance.resizeRowsToContents()
+
+
     def requestChartData(self):
         #종목코드 가져오기
         code = self.selectedStock.split(":")[0]
@@ -107,6 +145,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
 
         print("대기끝")
         df = self.dfFromModule
+        df = df.loc[0:20]
         return df
 
     def drawChart(self,df):
@@ -116,13 +155,14 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         fig.set_facecolor('w')
         self.canvas = FigureCanvas(fig)
         self.toolbar = NavigationToolbar(self.canvas, self)
-        self.bx_chartArea.addWidget(self.toolbar)
         self.bx_chartArea.addWidget(self.canvas)
+        self.bx_chartArea.addWidget(self.toolbar)
 
-        gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+        gs = gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
         axs = []
         axs.append(plt.subplot(gs[0]))  # 위 차트 = 캔들
-        axs.append(plt.subplot(gs[1], sharex=axs[0]))  # 아래 차트 = 거래량
+        axs.append(plt.subplot(gs[1], sharex=axs[0]))  # 아래 차트 = RSI 등 백분율
+        axs.append(plt.subplot(gs[2], sharex=axs[0]))  # 아래 차트 = 거래량
         for ax in axs:
             ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=range(1, 13)))
             ax.xaxis.set_minor_locator(mdates.MonthLocator())
@@ -133,6 +173,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         dohlc = np.hstack((np.reshape(x, (-1, 1)), ohlc))
         candlestick_ohlc(ax, dohlc, width=0.5, colorup='r', colordown='b')
 
+        ax1 = axs[1]
+
         #if문으로 보조지표 선택시 차트 그리기
         if "일목균형표" in self.selectedSubIndices :
             # ax. 일목균형차트
@@ -142,13 +184,15 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
             ax.plot(df.conv_line, label='conv_line', linestyle='solid', color='darkorange')
             ax.fill_between(df.index, df.span_a, df.span_b, alpha=0.3)
         if "RSI" in self.selectedSubIndices :
-            ax.plot(df.rsi, label="rsi", linestyle="solid",color="red")
+            ax1.plot(df.rsi, label="rsi", linestyle="solid",color="red")
 
         ax.grid(True, axis='y', color='grey', alpha=0.5, linestyle='--')
         ax.legend()
 
-        # ax2. 거래량 차트
-        ax2 = axs[1]
+
+
+        # ax3. 거래량 차트
+        ax2 = axs[2]
         color_fuc = lambda x: 'r' if x >= 0 else 'b'
         color_list = list(df['volume'].diff().fillna(0).apply(color_fuc))
         ax2.bar(x, df['volume'], width=0.5,

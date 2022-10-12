@@ -1,3 +1,8 @@
+from PyQt5.QtWidgets import *
+from PyQt5.QAxContainer import *
+from PyQt5.QtCore import *
+from PyQt5.QtTest import *
+import pandas
 
 class AccountData():
     kiwoom = None
@@ -6,7 +11,7 @@ class AccountData():
         super().__init__()
         self.kiwoom = kiwoom
         #이벤트 루프 등록
-        self.kiwoom.get_account_evaluation_balance_loop = QEventLoop()
+        self.account_event_loop = QEventLoop()
 
         # 계좌 관련 변수
         self.account_number = None
@@ -17,7 +22,8 @@ class AccountData():
         self.account_stock_dict = {}
 
         # 종목 분석 관련 변수
-        self.calculator_list = []
+        self.balance_list = {'index': [], 'code': [], 'name': [], 'eval': [], 'roi': [], 'buy': [], 'volume': [],
+                             'can_order': [], 'current_price': []}
 
         # 화면 번호
         self.screen_my_account = "1000"
@@ -32,21 +38,22 @@ class AccountData():
         return self.account_number
 
     def getBalanceInfo(self):
-        return self.account_stock_dict
+        return self.df
 
 
     def event_collection(self):
-        self.OnReceiveTrData.connect(self.tr_slot)  # 트랜잭션 요청 관련 이벤트
+        self.kiwoom.OnReceiveTrData.connect(self.tr_slot)  # 트랜잭션 요청 관련 이벤트
 
     #계좌정보 얻어오기
     def get_account_info(self):
-        account_list = self.kiwwom.dynamicCall("GetLoginInfo(QString)", "ACCLIST")
+        account_list = self.kiwoom.dynamicCall("GetLoginInfo(QString)", "ACCLIST")
         account_number = account_list.split(';')[0]
         self.account_number = account_number
         print(self.account_number)
 
     #잔고정보 요청
     def get_account_evaluation_balance(self, nPrevNext=0):
+        print("self.account_number"+self.account_number)
         self.kiwoom.dynamicCall("SetInputValue(QString, QString)",
                          "계좌번호", self.account_number)
         self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "비밀번호", " ")
@@ -55,8 +62,8 @@ class AccountData():
         self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)",
                          "계좌평가잔고내역요청", "opw00018", nPrevNext, self.screen_my_account)
 
-        if not self.kiwoom.account_event_loop.isRunning():
-            self.kiwoom.account_event_loop.exec_()
+        if not self.account_event_loop.isRunning():
+            self.account_event_loop.exec_()
 
     def tr_slot(self, sScrNo, sRQName, sTrCode, sRecordName, sPrevNext):
         if sRQName == "계좌평가잔고내역요청":
@@ -119,25 +126,38 @@ class AccountData():
                 if not stock_code in self.account_stock_dict:
                     self.account_stock_dict[stock_code] = {}
 
-                self.account_stock_dict[stock_code].update({'종목명': stock_name})
-                self.account_stock_dict[stock_code].update(
-                    {'평가손익': stock_evaluation_profit_and_loss})
-                self.account_stock_dict[stock_code].update(
-                    {'수익률(%)': stock_yield})
-                self.account_stock_dict[stock_code].update(
-                    {'매입가': stock_buy_money})
-                self.account_stock_dict[stock_code].update(
-                    {'보유수량': stock_quantity})
-                self.account_stock_dict[stock_code].update(
-                    {'매매가능수량': stock_trade_quantity})
-                self.account_stock_dict[stock_code].update(
-                    {'현재가': stock_present_price})
+                self.balance_list['index'].append(i)
+                self.balance_list['code'].append(stock_code)
+                self.balance_list['name'].append(stock_name)
+                self.balance_list['eval'].append(stock_evaluation_profit_and_loss)
+                self.balance_list['roi'].append(stock_yield)
+                self.balance_list['buy'].append(stock_buy_money)
+                self.balance_list['volume'].append(stock_quantity)
+                self.balance_list['can_order'].append(stock_trade_quantity)
+                self.balance_list['current_price'].append(stock_present_price)
+                # self.account_stock_dict[stock_code].update({'종목명': stock_name})
+                # self.account_stock_dict[stock_code].update(
+                #     {'평가손익': stock_evaluation_profit_and_loss})
+                # self.account_stock_dict[stock_code].update(
+                #     {'수익률(%)': stock_yield})
+                # self.account_stock_dict[stock_code].update(
+                #     {'매입가': stock_buy_money})
+                # self.account_stock_dict[stock_code].update(
+                #     {'보유수량': stock_quantity})
+                # self.account_stock_dict[stock_code].update(
+                #     {'매매가능수량': stock_trade_quantity})
+                # self.account_stock_dict[stock_code].update(
+                #     {'현재가': stock_present_price})
 
             if sPrevNext == "2":
                 self.get_account_evaluation_balance(2)
             else:
                 self.cancel_screen_number(self.screen_my_account)
-                self.kiwoom.account_event_loop.exit()
+                self.account_event_loop.exit()
+                self.df = pandas.DataFrame(self.balance_list,
+                                      columns=['index', 'code', 'name', 'eval', 'roi', 'buy', 'volume', 'can_order','current_price'])
+                self.df.set_index("index", inplace=True)
+                print("account balance",self.df)
 
         # elif sRQName == "예수금상세현황요청":
         #     deposit = self.kiwoom.dynamicCall(

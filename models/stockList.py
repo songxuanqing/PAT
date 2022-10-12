@@ -3,8 +3,7 @@
 class StockList():
     kiwoom = None
     arr = []
-    arr.append("039490:삼성전자")
-    arr.append("039491:LG전자")
+    arr.append("005930:삼성전자")
     def __init__(self,kiwoom):
         self.kiwoom = kiwoom
         self.setList("0")
@@ -16,7 +15,8 @@ class StockList():
 
         for x in code_list:
             name = self.kiwoom.dynamicCall("GetMasterCodeName(QString)", [x])
-            self.arr.append(x + " : " + name)
+            if(x!=""):
+                self.arr.append(x + " : " + name)
 
 
     def getList(self):
