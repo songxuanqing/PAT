@@ -17,42 +17,42 @@ import models.favoriteList as FavoriteList
 import models.stockList as StockList
 import models.candleList as CandleList
 import models.subIndexList as SubIndexList
-import models.chartData as ChartData
+import models.kiwoomData as KiwoomData
 import models.subIndexData as SubIndexData
 
 
 def OnEventConnect(err_code):
     if err_code == 0:  # err_code가 0이면 로그인 성공 그외 실패
-        window = MainWindow()  # Window 클래스를 생성하여 Wondow 변수에 할당
+        window = MainWindow(kiwoom)  # Window 클래스를 생성하여 Wondow 변수에 할당
     else:
         print("fail")
 
 
 class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
-    kiwoom = None
-    #저장소 생성
-    #저장소에서  최근 데이터 가져오기
-    arr = []
-    #즐겨찾기 객체생성
-    favoriteList = FavoriteList.FavoriteList()
-    favoriteList.setList(arr)
-
-    stocklist = StockList.StockList(kiwoom)
-    stockList = stocklist.getList()
-    candlelist = CandleList.CandleList()
-    candleList = candlelist.getList()
-    subindexlist = SubIndexList.SubIndexList()
-    subIndexList = subindexlist.getList()
-    chartData = ChartData.ChartData(kiwoom)
-
-    selectedStock = "039490:삼성전기"
-    selectedCandle = "3 분"
-    selectedSubIndices = ["일목균형표"]
-
-
-    def __init__(self, kiwoom):  # Window 클래스의 초기화 함수(생성자)
-        self.kiwoom = kiwoom
+    def __init__(self,kiwoom):  # Window 클래스의 초기화 함수(생성자)
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
+        self.kiwoom = kiwoom
+        arr = []
+        # 저장소 생성
+        # 저장소에서  최근 데이터 가져오기
+
+
+        # 즐겨찾기 객체생성
+        self.favoriteList = FavoriteList.FavoriteList()
+        self.favoriteList.setList(arr)
+
+        self.stocklist = StockList.StockList(kiwoom)
+        self.stockList = self.stocklist.getList()
+        self.candlelist = CandleList.CandleList()
+        self.candleList = self.candlelist.getList()
+        self.subindexlist = SubIndexList.SubIndexList()
+        self.subIndexList = self.subindexlist.getList()
+        self.kiwoomData = KiwoomData.ChartData(kiwoom)
+
+        self.selectedStock = "039490:삼성전기"
+        self.selectedCandle = "3 분"
+        self.selectedSubIndices = ["일목균형표"]
+
         self.ui = uic.loadUi("main.ui",self) #ui 파일 불러오기
         #종목 콤보박스 변경 이벤트 수신
         self.cb_stockList.currentTextChanged.connect(self.selectStock)
@@ -87,7 +87,7 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
         time = now.strftime("%Y%m%d")
         interval = self.selectedCandle.split(" ")[0]
         type = self.selectedCandle.split(" ")[1]
-        # df = self.chartData.requestTR(code,time,type,interval)
+        # df = self.kiwoomData.requestTR(code,time,type,interval)
         data = [[0,20180807,30000,30000,30000,30000,0,30000],[1,20180808,31050,31300,30650,30950,3567300,30950],[2,20180809,31550,32000,31100,31950,3898300,31950],[3,20180810,31800,32100,31550,31900,1913300,31900],[4,20180813,32150,32250,31500,31900,3487200,31900]]
         df = pd.DataFrame(data,columns=['index','date','open','high','low','close','Adj','volume'])
         return df
@@ -156,9 +156,8 @@ class MainWindow(QtWidgets.QMainWindow):  # Window 클래스 QMainWindow, form_c
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     kiwoom = QAxWidget("KHOPENAPI.KHOpenAPICtrl.1")
-    # kiwoom.dynamicCall("CommConnect()")
-    # kiwoom.OnEventConnect.connect(OnEventConnect)
-    window = MainWindow(kiwoom)  # Window 클래스를 생성하여 Wondow 변수에 할당
+    kiwoom.dynamicCall("CommConnect()")
+    kiwoom.OnEventConnect.connect(OnEventConnect)
     app.exec_()  # 메인 이벤트 루프에 진입 후 프로그램이 종료될 때까지 무한 루프 상태 대기
 
 

@@ -7,7 +7,7 @@ class StockList():
     arr.append("039491:LG전자")
     def __init__(self,kiwoom):
         self.kiwoom = kiwoom
-        # self.setList("0")
+        self.setList("0")
 
     def setList(self, market):
         #request 종목 코드
