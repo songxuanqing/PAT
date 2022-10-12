@@ -22,8 +22,8 @@ class AccountData():
         self.account_stock_dict = {}
 
         # 종목 분석 관련 변수
-        self.balance_list = {'index': [], 'code': [], 'name': [], 'eval': [], 'roi': [], 'buy': [], 'volume': [],
-                             'can_order': [], 'current_price': []}
+        self.balance_list = {'No': [], '종목코드': [], '종목명': [], '평가금액': [], '수익율(%)': [], '매입가': [], '보유량': [],
+                             '매매가능수량': [], '현재가': []}
 
         # 화면 번호
         self.screen_my_account = "1000"
@@ -126,28 +126,15 @@ class AccountData():
                 if not stock_code in self.account_stock_dict:
                     self.account_stock_dict[stock_code] = {}
 
-                self.balance_list['index'].append(i)
-                self.balance_list['code'].append(stock_code)
-                self.balance_list['name'].append(stock_name)
-                self.balance_list['eval'].append(stock_evaluation_profit_and_loss)
-                self.balance_list['roi'].append(stock_yield)
-                self.balance_list['buy'].append(stock_buy_money)
-                self.balance_list['volume'].append(stock_quantity)
-                self.balance_list['can_order'].append(stock_trade_quantity)
-                self.balance_list['current_price'].append(stock_present_price)
-                # self.account_stock_dict[stock_code].update({'종목명': stock_name})
-                # self.account_stock_dict[stock_code].update(
-                #     {'평가손익': stock_evaluation_profit_and_loss})
-                # self.account_stock_dict[stock_code].update(
-                #     {'수익률(%)': stock_yield})
-                # self.account_stock_dict[stock_code].update(
-                #     {'매입가': stock_buy_money})
-                # self.account_stock_dict[stock_code].update(
-                #     {'보유수량': stock_quantity})
-                # self.account_stock_dict[stock_code].update(
-                #     {'매매가능수량': stock_trade_quantity})
-                # self.account_stock_dict[stock_code].update(
-                #     {'현재가': stock_present_price})
+                self.balance_list['No'].append(i)
+                self.balance_list['종목코드'].append(stock_code)
+                self.balance_list['종목명'].append(stock_name)
+                self.balance_list['평가금액'].append(str(stock_evaluation_profit_and_loss))
+                self.balance_list['수익율(%)'].append(str(stock_yield))
+                self.balance_list['매입가'].append(str(stock_buy_money))
+                self.balance_list['보유량'].append(str(stock_quantity))
+                self.balance_list['매매가능수량'].append(str(stock_trade_quantity))
+                self.balance_list['현재가'].append(str(stock_present_price))
 
             if sPrevNext == "2":
                 self.get_account_evaluation_balance(2)
@@ -155,8 +142,8 @@ class AccountData():
                 self.cancel_screen_number(self.screen_my_account)
                 self.account_event_loop.exit()
                 self.df = pandas.DataFrame(self.balance_list,
-                                      columns=['index', 'code', 'name', 'eval', 'roi', 'buy', 'volume', 'can_order','current_price'])
-                self.df.set_index("index", inplace=True)
+                                      columns=['No', '종목코드', '종목명', '평가금액', '수익율(%)', '매입가', '보유량', '매매가능수량','현재가'])
+                self.df.set_index("No", inplace=True)
                 print("account balance",self.df)
 
         # elif sRQName == "예수금상세현황요청":

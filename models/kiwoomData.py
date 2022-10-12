@@ -3,6 +3,7 @@ from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
 from PyQt5.QtTest import *
 import pandas
+from datetime import datetime
 import os, sys
 print(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -113,9 +114,31 @@ class KiwoomData(observer.Subject):
                 if self.type == "분" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "체결시간")
-                else :
+                    # format = yyyymmddHHMM
+                    # date_to_time = datetime.strptime(date,"%Y%m%d%H%M")
+                    # date = date_to_time.strftime("%H:%M")
+                    date = date[-4:]
+                elif self.type == "일" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
+                    # format = yyyymmdd
+                    # date_to_time = datetime.strptime(date, "%Y%m%d")
+                    # date = date_to_time.strftime("%m/%d")
+                    date = date[-4:]
+                elif self.type == "주" :
+                    date = self.kiwoom.dynamicCall(
+                        "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
+                    # format = yyyymmdd
+                    # date_to_time = datetime.strptime(date, "%Y%m%d%H%M")
+                    # date = date_to_time.strftime("%m/%d")
+                    date = date[-4:]
+                elif self.type == "월" :
+                    date = self.kiwoom.dynamicCall(
+                        "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
+                    #format = yyyymm
+                    # date_to_time = datetime.strptime(date, "%Y%m")
+                    # date = date_to_time.strftime("%y/%m")
+                    date = date[-4:]
                 open = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "시가")
                 high = self.kiwoom.dynamicCall(
@@ -139,7 +162,7 @@ class KiwoomData(observer.Subject):
             self.calculator_event_loop.exit()
             df = pandas.DataFrame(self.calculator_list,
                                   columns=['index','date', 'open', 'high', 'low', 'close', 'volume'])
-            df.set_index("index",inplace=True)
+            df.set_index("date",inplace=True)
             self.is_completed_request = True
             self.notify_observers(df)
             print(df)

@@ -12,7 +12,6 @@ import matplotlib.gridspec as gridspec
 from PyQt5.QAxContainer import *
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import *
-from PyQt5 import uic
 import models.accountData as AccountData
 import models.favoriteList as FavoriteList
 import models.stockList as StockList
@@ -109,10 +108,10 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.tbl_totalBalance.setColumnCount(nColumns)
         # self.setItemDelegate(FloatDelegate())
 
-        for i in nRows:
-            for j in nColumns:
-                x = '{:.3f}'.format(self.df.iloc[i, j])
-                self.setItem(i, j, QtWidgets.QTableWidgetItem(x))
+        for i in range(self.tbl_totalBalance.rowCount()):
+            for j in range(self.tbl_totalBalance.columnCount()):
+                x = self.accountBalanceInfo.iloc[i, j]
+                self.tbl_totalBalance.setItem(i, j, QtWidgets.QTableWidgetItem(x))
 
         # horHeaders = []
         # numRow = 0
@@ -123,10 +122,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         #         newitem = QtWidgets.QTableWidgetItem(item)
         #         self.tbl_totalBalance.setItem(m, n, newitem)
 
-        # self.tbl_totalBalance.setHorizontalHeaderLabels(horHeaders)
-        # self.tbl_totalBalance.resize(290, 290)
-        # self.tbl_totalBalance.setRowCount(numRow)
-        # self.tbl_totalBalance.setColumnCount(7)
+        self.tbl_totalBalance.setHorizontalHeaderLabels(self.accountBalanceInfo.columns)
         self.tbl_totalBalance.resizeColumnsToContents()
         self.tbl_totalBalance.resizeRowsToContents()
 
@@ -138,6 +134,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         time = now.strftime("%Y%m%d")
         interval = self.selectedCandle.split(" ")[0]
         type = self.selectedCandle.split(" ")[1]
+
         self.kiwoomData.request_candle_data(code=code, date=time, nPrevNext=0, type=type,
                             interval=interval)
         while(self.is_completed == False):
@@ -145,13 +142,13 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
 
         print("대기끝")
         df = self.dfFromModule
-        df = df.loc[0:20]
+        df = df[df["index"] < 20]
         return df
 
     def drawChart(self,df):
         # ----------------------------------------------------------------------------------#
         # 그래프 구역 나누기
-        fig = plt.figure(figsize=(12, 8))
+        fig = plt.figure(figsize=(11, 8))
         fig.set_facecolor('w')
         self.canvas = FigureCanvas(fig)
         self.toolbar = NavigationToolbar(self.canvas, self)
