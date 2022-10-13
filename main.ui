@@ -144,7 +144,7 @@
      <string>자동매매 로그</string>
     </property>
    </widget>
-   <widget class="QTextBrowser" name="tv_atLog">
+   <widget class="QPlainTextEdit" name="tv_atLog">
     <property name="geometry">
      <rect>
       <x>860</x>

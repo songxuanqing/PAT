@@ -22,10 +22,10 @@ import models.stockList as StockList
 import models.candleList as CandleList
 import models.subIndexList as SubIndexList
 import models.kiwoomData as KiwoomData
+import models.autoTrading as AutoTrading
 import models.subIndexData as SubIndexData
 import interface.observer as observer
-
-
+import interface.observerOrder as observerOrder
 
 def OnEventConnect(err_code):
     if err_code == 0:  # err_code가 0이면 로그인 성공 그외 실패
@@ -34,7 +34,7 @@ def OnEventConnect(err_code):
         print("fail")
 
 
-class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
+class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
     def __init__(self,kiwoom):  # Window 클래스의 초기화 함수(생성자)
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.kiwoom = kiwoom
@@ -45,6 +45,12 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
 
         # 저장소 생성
         # 저장소에서  최근 데이터 가져오기
+
+        #모니터링할 조건식 리스트 가져오기
+        self.monitoredConditionList = []
+        self.autoTrading = AutoTrading.AutoTrading(kiwoom)
+        #조건수 갯수만큼 for문해서 조건만큼 Thread 생성(조건을 변수로 넘긴다)
+        self.autoTrading.addThread()
 
 
         # 즐겨찾기 객체생성
@@ -59,8 +65,14 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.candleList = self.candlelist.getList()
         self.subindexlist = SubIndexList.SubIndexList()
         self.subIndexList = self.subindexlist.getList()
+
+
+        #옵저버 대상(항목) 등록
         self.kiwoomData = KiwoomData.KiwoomData(kiwoom)
         self.register_subject(self.kiwoomData)
+        self.register_subject_order(self.autoTrading)
+
+
 
         self.selectedStock = "005930:삼성전자"
         self.selectedCandle = "1 일"
@@ -76,8 +88,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.cb_subIndexList.addItems(self.subIndexList)
 
         #실시간데이터 로그
+        # 주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
         self.tv_atLog.setReadOnly(True)
-        #주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
 
         #계정 잔고 정보 나타내기
         self.displayBalanceTable()
@@ -98,6 +110,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         #보조지표 선택에 변경이 있을 경우, df 데이터 변경
         self.ui.show()
 
+    #캔들데이터 옵저버
     def update(self, is_completed,data):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
         self.is_completed = is_completed
         self.dfFromModule = data
@@ -107,6 +120,16 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.subject = subject
         self.subject.register_observer(self)
 
+    # 주문데이터 옵저버
+    def update_order(self, data):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
+        print("주문완료 data"+data)
+        self.tv_atLog.appendPlainText(data)
+
+    def register_subject_order(self, subject_order):
+        self.subject_order = subject_order
+        self.subject_order.register_observer_order(self)
+
+    #잔고 테이블 표시
     def displayBalanceTable(self):
         print("account"+str(self.accountBalanceInfo))
 
