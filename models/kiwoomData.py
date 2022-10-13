@@ -24,8 +24,8 @@ class KiwoomData(observer.Subject):
         # 화면 번호
         self.screen_calculation_stock = "2000"
 
-        #이벤트 TR슬롯 등록록
-        self.event_collection()
+        #이벤트 TR슬롯 등록
+        self.kiwoom.OnReceiveTrData.connect(self.tr_slot)
 
         self.is_completed_request = False
 
@@ -48,9 +48,6 @@ class KiwoomData(observer.Subject):
 
     def getChartData(self):
         return self.calculator_list
-
-    def event_collection(self):
-        self.kiwoom.OnReceiveTrData.connect(self.tr_slot)  # 트랜잭션 요청 관련 이벤트
 
     def request_candle_data(self, code=None, date=None, nPrevNext=0, type=None,
                             interval=None):

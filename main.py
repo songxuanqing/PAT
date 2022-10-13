@@ -9,6 +9,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.gridspec as gridspec
+
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+
 from PyQt5.QAxContainer import *
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import *
@@ -70,6 +74,10 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
         self.cb_candleList.addItems(self.candleList)
         self.cb_subIndexList.currentTextChanged.connect(self.selectSubIndices)
         self.cb_subIndexList.addItems(self.subIndexList)
+
+        #실시간데이터 로그
+        self.tv_atLog.setReadOnly(True)
+        #주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
 
         #계정 잔고 정보 나타내기
         self.displayBalanceTable()
@@ -141,11 +149,25 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer):  # Window 클래스 
             print("대기중")
 
         print("대기끝")
+        self.is_completed = False
         df = self.dfFromModule
         df = df[df["index"] < 20]
         return df
 
     def drawChart(self,df):
+        # fig = go.Figure(data=[go.Candlestick(x=df['index'],
+        #                                      open=df['open'],
+        #                                      high=df['high'],
+        #                                      low=df['low'],
+        #                                      close=df['close'])])
+        # self.canvas = FigureCanvas(fig)
+        # self.bx_chartArea.addWidget(self.canvas)
+        # # x축 type을 카테고리 형으로 설정, 순서를 오름차순으로 날짜순서가 되도록 설정
+        # fig.layout = dict(xaxis=dict(type="category",
+        #                              categoryorder='category ascending'))
+        # fig.update_xaxes(nticks=5)
+        # self.browser.setHtml(fig.to_html(include_plotlyjs='cdn'))
+
         # ----------------------------------------------------------------------------------#
         # 그래프 구역 나누기
         fig = plt.figure(figsize=(11, 8))
