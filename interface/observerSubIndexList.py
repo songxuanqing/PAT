@@ -4,23 +4,23 @@ class Subject:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def register_observer_order(self):
+    def register_observer_subIndex(self):
         pass
 
     @abstractmethod
-    def remove_observer_order(self):
+    def remove_observer_subIndex(self):
         pass
 
     @abstractmethod
-    def notify_observers_order(self):
+    def notify_observers_subIndex(self):
         pass
 
 class Observer:
 
     @abstractmethod
-    def update_order(self, data):
+    def update_subIndex(self):
         pass
 
     @abstractmethod
-    def register_subject_order(self, subject):
+    def register_subject_subIndex(self, subject):
         pass

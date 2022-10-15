@@ -18,7 +18,7 @@ class Subject:
 class Observer:
 
     @abstractmethod
-    def update(self, temperature, humidity, pressure):
+    def update(self, data):
         pass
 
     @abstractmethod

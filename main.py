@@ -27,6 +27,7 @@ import models.autoTrading as AutoTrading
 import models.subIndexData as SubIndexData
 import interface.observer as observer
 import interface.observerOrder as observerOrder
+import interface.observerSubIndexList as observerSubIndexList
 import controls.checkableComboBox as CheckableComboBox
 
 def OnEventConnect(err_code):
@@ -36,7 +37,7 @@ def OnEventConnect(err_code):
         print("fail")
 
 
-class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
+class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observer, observerSubIndexList.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
     def __init__(self,kiwoom):  # Window 클래스의 초기화 함수(생성자)
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.kiwoom = kiwoom
@@ -69,8 +70,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.kiwoomData = KiwoomData.KiwoomData(kiwoom)
         self.register_subject(self.kiwoomData)
         self.register_subject_order(self.autoTrading)
-
-
+        self.cb_subIndexList = CheckableComboBox.CheckableComboBox()
+        self.register_subject_subIndex(self.cb_subIndexList)
 
         self.selectedStock = "005930 : 삼성전자"
         self.selectedCandle = "1 일"
@@ -83,14 +84,13 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         #종목 콤보박스 변경 이벤트 수신
         self.cb_stockList.activated.connect(self.selectStock)
         self.cb_stockList.addItems(self.stockList)
+        #캔들 콤보박스 변경 이벤트
         self.cb_candleList.activated.connect(self.selectCandle)
         self.cb_candleList.addItems(self.candleList)
-
-        self.cb_subIndexList = CheckableComboBox.CheckableComboBox()
+        #보조지표 목록 준비
         self.cb_subIndexList.addItems(self.subIndexList)
-        self.bx_subIndexListArea.addWidget(self.cb_subIndexList2)
-        # self.cb_subIndexList.activated.connect(self.selectSubIndices)
-        # self.cb_subIndexList.addItems(self.subIndexList)
+        self.bx_subIndexListArea.addWidget(self.cb_subIndexList)
+
 
         #실시간데이터 로그
         # 주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
@@ -121,6 +121,14 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
     def register_subject_order(self, subject_order):
         self.subject_order = subject_order
         self.subject_order.register_observer_order(self)
+
+    # 보조지표 선택 데이터 옵저버
+    def update_subIndex(self):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
+        self.selectSubIndices()
+
+    def register_subject_subIndex(self, subject_subIndex):
+        self.subject_subIndex = subject_subIndex
+        self.subject_subIndex.register_observer_subIndex(self)
 
     #잔고 테이블 표시
     def displayBalanceTable(self):
@@ -361,8 +369,9 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.selectedCandle = self.cb_candleList.currentText()
         self.displayChart()
 
-    def selectSubIndices(self,item):
-        self.selectedSubIndices.append(item)
+    def selectSubIndices(self):
+        self.selectedSubIndices = self.cb_subIndexList.currentData()
+        print(self.selectedSubIndices)
 
 
 if __name__ == '__main__':

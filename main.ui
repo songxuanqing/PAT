@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1120</width>
+    <width>1117</width>
     <height>796</height>
    </rect>
   </property>
@@ -275,12 +275,19 @@
     <property name="geometry">
      <rect>
       <x>630</x>
-      <y>0</y>
-      <width>481</width>
-      <height>31</height>
+      <y>10</y>
+      <width>301</width>
+      <height>21</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="bx_subIndexListArea"/>
+    <layout class="QVBoxLayout" name="bx_subIndexListArea">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+    </layout>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
