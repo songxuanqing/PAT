@@ -9,11 +9,10 @@ class SubIndexList():
         self.arr.append("이평선 20일")
         self.arr.append("이평선 60일")
         self.arr.append("RSI")
-        self.arr.append("일목균형표")
-        self.arr.append("MACD")
-        self.arr.append("BB")
         self.arr.append("스토캐스틱")
-
+        self.arr.append("MACD")
+        self.arr.append("일목균형표")
+        self.arr.append("BB")
 
     def getList(self):
         return self.arr

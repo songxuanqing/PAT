@@ -95,7 +95,7 @@ class KiwoomData(observer.Subject):
 
     #get slot datas and set data
     def tr_slot(self, sScrNo, sRQName, sTrCode, sRecordName, sPrevNext):
-        if "봉차트조회요청"  in sRQName:
+        if "봉차트조회요청" in sRQName:
             stock_code = self.kiwoom.dynamicCall(
                 "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "종목코드")
             stock_code = stock_code.strip()

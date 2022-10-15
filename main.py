@@ -17,7 +17,6 @@ import plotly.express as px
 from PyQt5.QAxContainer import *
 from PyQt5 import QtWidgets, uic, QtWebEngineWidgets
 from PyQt5.QtGui import *
-from PyQt5.QtCore import QUrl
 import models.accountData as AccountData
 import models.favoriteList as FavoriteList
 import models.stockList as StockList
@@ -28,6 +27,7 @@ import models.autoTrading as AutoTrading
 import models.subIndexData as SubIndexData
 import interface.observer as observer
 import interface.observerOrder as observerOrder
+import controls.checkableComboBox as CheckableComboBox
 
 def OnEventConnect(err_code):
     if err_code == 0:  # err_code가 0이면 로그인 성공 그외 실패
@@ -40,14 +40,10 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
     def __init__(self,kiwoom):  # Window 클래스의 초기화 함수(생성자)
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.kiwoom = kiwoom
-
         self.is_completed = False
         arr = []
-
-
         # 저장소 생성
         # 저장소에서  최근 데이터 가져오기
-
         #모니터링할 조건식 리스트 가져오기
         self.monitoredConditionList = []
         self.autoTrading = AutoTrading.AutoTrading(kiwoom)
@@ -89,10 +85,12 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.cb_stockList.addItems(self.stockList)
         self.cb_candleList.activated.connect(self.selectCandle)
         self.cb_candleList.addItems(self.candleList)
-        self.cb_subIndexList.activated.connect(self.selectSubIndices)
+
+        self.cb_subIndexList = CheckableComboBox.CheckableComboBox()
         self.cb_subIndexList.addItems(self.subIndexList)
-
-
+        self.bx_subIndexListArea.addWidget(self.cb_subIndexList2)
+        # self.cb_subIndexList.activated.connect(self.selectSubIndices)
+        # self.cb_subIndexList.addItems(self.subIndexList)
 
         #실시간데이터 로그
         # 주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
@@ -103,7 +101,6 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         #차트 그리기
         self.displayChart()
 
-        #보조지표 선택에 변경이 있을 경우, df 데이터 변경
         self.ui.show()
 
     #캔들데이터 옵저버
@@ -155,7 +152,20 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
                     df = subIndex.calc_RSI(df)
                 elif (i == "일목균형표"):
                     df = subIndex.calc_ichimoku(df)
-
+                elif (i == "이평선 5일"):
+                    df = subIndex.calc_SMA(df,5)
+                elif (i == "이평선 10일"):
+                    df = subIndex.calc_SMA(df, 10)
+                elif (i == "이평선 20일"):
+                    df = subIndex.calc_SMA(df, 20)
+                elif (i == "이평선 60일"):
+                    df = subIndex.calc_SMA(df, 60)
+                elif (i == "스토캐스틱"):
+                    df = subIndex.calc_stochastic(df)
+                elif (i == "MACD"):
+                    df = subIndex.calc_MACD(df)
+                elif (i == "BB"):
+                    df = subIndex.calc_BB(df)
         self.drawChart(df)
 
 
@@ -179,8 +189,15 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         return df
 
     def drawChart(self,df):
+        #rows 계산하기
+        rows = 2
+        if ("RSI" in self.selectedSubIndices) or ("스토캐스틱" in self.selectedSubIndices) :
+            rows = rows + 1
+        if ("MACD" in self.selectedSubIndices) :
+            rows = rows + 1
+
         # Create subplots and mention plot grid size
-        fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
+        fig = make_subplots(rows=rows, cols=1, shared_xaxes=True,
                             vertical_spacing=0.03,
                             row_width=[0.2, 0.2, 0.7])
 
@@ -191,38 +208,86 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
                                              low=df['low'],
                                              close=df['close'],showlegend=False),row=1, col=1)
 
-        # #if문으로 보조지표 선택시 차트 그리기
-        if "일목균형표" in self.selectedSubIndices :
-            fig.add_trace(go.Scatter(x=df['date'],
-                                     y=df.span_a,
-                                     fill=None,
-                                     line=dict(color='pink', width=1),
-                                     name='스팬 1'
-                                     ), row=1, col=1)
-            fig.add_trace(go.Scatter(x=df['date'],
-                                     y=df.span_b,
-                                     fill='tonexty', #스팬 a , b 사이에 컬러 채우기
-                                     line=dict(color='lightsteelblue', width=1),
-                                     name='스팬 2'
-                                     ), row=1, col=1)
-            fig.add_trace(go.Scatter(x=df['date'],
-                                     y=df.base_line,
-                                     fill=None,
-                                     line=dict(color='green', width=3),
-                                     name='기준선'
-                                     ), row=1, col=1)
-            fig.add_trace(go.Scatter(x=df['date'],
-                                     y=df.conv_line,
-                                     fill=None,
-                                     line=dict(color='darkorange', width=1),
-                                     name='전환선'
-                                     ), row=1, col=1)
-
-        if "RSI" in self.selectedSubIndices :
-            fig.add_trace(go.Scatter(x=df['date'], y=df['rsi'], mode="lines", name="RSI", showlegend=True), row=2, col=1)
-
         # Bar trace for volumes on 2nd row without legend
-        fig.add_trace(go.Bar(x=df['date'], y=df['volume'], name="거래량", showlegend=False), row=3, col=1)
+        fig.add_trace(go.Bar(x=df['date'], y=df['volume'], name="거래량", showlegend=False), row=2, col=1)
+
+        # #if문으로 보조지표 선택시 차트 그리기
+        if len(self.selectedSubIndices) >= 1:
+            for i in self.selectedSubIndices:
+                #일목균형표, 이평선, BB는 가격차트(1), RSI, 스토캐스틱은 3번차트, MACD는 4번 차트
+                if (i == "일목균형표"):
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.span_a,
+                                             fill=None,
+                                             line=dict(color='pink', width=1),
+                                             name='스팬 1'
+                                             ), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.span_b,
+                                             fill='tonexty',  # 스팬 a , b 사이에 컬러 채우기
+                                             line=dict(color='lightsteelblue', width=1),
+                                             name='스팬 2'
+                                             ), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.base_line,
+                                             fill=None,
+                                             line=dict(color='green', width=3),
+                                             name='기준선'
+                                             ), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.conv_line,
+                                             fill=None,
+                                             line=dict(color='darkorange', width=1),
+                                             name='전환선'
+                                             ), row=1, col=1)
+                elif "이평선" in i:
+                    col = i.split(" ")[1][:1]+"sma"
+                    fig.add_trace(go.Scatter(x=df['date'], y=df[col],
+                                             mode="lines", name=i, showlegend=True), row=1, col=1)
+                elif (i == "BB"):
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.bb_mavg,
+                                             fill=None,
+                                             line=dict(color='red', width=1),
+                                             name='상단밴드'
+                                             ), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.bb_h,
+                                             fill=None,
+                                             line=dict(color='green', width=1),
+                                             name='중심선'
+                                             ), row=1, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'],
+                                             y=df.bb_l,
+                                             fill=None,
+                                             line=dict(color='blue', width=1),
+                                             name='하단밴드'
+                                             ), row=1, col=1)
+                elif (i == "RSI"):
+                    fig.add_trace(go.Scatter(x=df['date'], y=df['rsi'],
+                                             mode="lines", name="RSI", showlegend=True), row=3, col=1)
+                elif (i == "스토캐스틱"):
+                    fig.add_trace(go.Scatter(x=df['date'], y=df.stoch_k,
+                                             fill=None,
+                                             line=dict(color='lightsteelblue', width=1),
+                                             name='stoch_k'), row=3, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'], y=df.stoch_d,
+                                             fill=None,
+                                             line=dict(color='orange', width=1),
+                                             name='stoch_d'), row=3, col=1)
+                elif (i == "MACD"):
+                    if rows == 4 :
+                        mac_row = 4
+                    elif rows == 3 :
+                        mac_row = 3
+                    fig.add_trace(go.Scatter(x=df['date'], y=df.macd,
+                                             fill=None,
+                                             line=dict(color='lightsteelblue', width=1),
+                                             name='MACD'), row=mac_row, col=1)
+                    fig.add_trace(go.Scatter(x=df['date'], y=df.macd_signal,
+                                             fill=None,
+                                             line=dict(color='orange', width=1),
+                                             name='MACD_Signal'), row=mac_row, col=1)
 
         # Do not show OHLC's rangeslider plot
         fig.update(layout_xaxis_rangeslider_visible=False)
@@ -295,7 +360,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
     def selectCandle(self,item):
         self.selectedCandle = self.cb_candleList.currentText()
         self.displayChart()
-        
+
     def selectSubIndices(self,item):
         self.selectedSubIndices.append(item)
 
