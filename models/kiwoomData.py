@@ -159,7 +159,7 @@ class KiwoomData(observer.Subject):
             self.calculator_event_loop.exit()
             df = pandas.DataFrame(self.calculator_list,
                                   columns=['index','date', 'open', 'high', 'low', 'close', 'volume'])
-            df.set_index("date",inplace=True)
+            df.set_index(df['date'],inplace=True)
             self.is_completed_request = True
             self.notify_observers(df)
             print(df)
