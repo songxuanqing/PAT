@@ -25,10 +25,12 @@ import models.subIndexList as SubIndexList
 import models.kiwoomData as KiwoomData
 import models.autoTrading as AutoTrading
 import models.subIndexData as SubIndexData
+import models.database as Database
 import interface.observer as observer
 import interface.observerOrder as observerOrder
 import interface.observerSubIndexList as observerSubIndexList
 import controls.checkableComboBox as CheckableComboBox
+import registerCondition
 
 def OnEventConnect(err_code):
     if err_code == 0:  # err_code가 0이면 로그인 성공 그외 실패
@@ -90,6 +92,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         #보조지표 목록 준비
         self.cb_subIndexList.addItems(self.subIndexList)
         self.bx_subIndexListArea.addWidget(self.cb_subIndexList)
+        #자동매매 조건 관리탭 이벤트
+        self.bt_addCondition.clicked.connect(self.openRegisterCondition)
 
 
         #실시간데이터 로그
@@ -102,6 +106,11 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.displayChart()
 
         self.ui.show()
+
+        #windows 데이터 저장 관리
+        self.dataManager = Database.Database()
+        self.createConditionFile()
+
 
     #캔들데이터 옵저버
     def update(self, is_completed,data):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
@@ -373,6 +382,13 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.selectedSubIndices = self.cb_subIndexList.currentData()
         print(self.selectedSubIndices)
 
+    def openRegisterCondition(self):
+        registerCondition.RegisterCondition(self.dataManager)
+
+    def createConditionFile(self):
+        conditionHeaderList = ['종목코드','종목명','매수가','총금액','시작시간','종료시간',
+                     '부분익절율','부분익절수량','최대익절율','부분손절율','부분손절수량','최대손절율']
+        self.dataManager.createCSVFile("pats_condition.csv",conditionHeaderList)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
