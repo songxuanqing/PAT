@@ -48,10 +48,12 @@ class KiwoomRealTimeData(observer.Subject):
         self.subscribe_stock_conclusion('2')
 
     def subscribe_stock_conclusion(self, screen_no):
-        self.SetRealReg(screen_no, "229200", "20", 0)
+        self.SetRealReg(screen_no, self.code, "20", 0)
+        #fid 20는 주식체결 관련 체결시간
 
     def subscribe_market_time(self, screen_no):
         self.SetRealReg(screen_no, "", "215", 0)
+        #fid 215는 장시작시간
 
     # 실시간 타입을 위한 메소드
     def SetRealReg(self, screen_no, code_list, fid_list, real_type):
