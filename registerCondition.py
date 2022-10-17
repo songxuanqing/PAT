@@ -15,8 +15,8 @@ class RegisterCondition(QtWidgets.QDialog):
         stockName = self.tv_codeName.toPlainText()
         buyPrice = self.et_buyPrice.toPlainText()
         totalBuyAmount = self.et_totalBuyAmout.toPlainText()
-        buyStartTime = self.et_buyStartTime.dateTime().toString("%H%M")
-        buyEndTime = self.et_buyEndTime.dateTime().toString("%H%M")
+        buyStartTime = self.et_buyStartTime.dateTime().toString("HH:mm")
+        buyEndTime = self.et_buyEndTime.dateTime().toString("HH:mm")
         profitRate = self.et_profitRate.toPlainText()
         profitRateVolume = self.et_profitRateVolume.toPlainText()
         maxProfitRate = self.et_maxProfitRate.toPlainText()
@@ -30,9 +30,6 @@ class RegisterCondition(QtWidgets.QDialog):
                           columns=['종목코드','종목명','매수가','총금액',
                                    '시작시간','종료시간','부분익절율','부분익절수량','최대익절율',
                                    '부분손절율','부분손절수량','최대손절율'])
-
-        # df.to_csv('pats_condition.csv', mode='a', header=False)
-        # with open('pats_condition.csv', 'a') as f:
-        #     df.to_csv(f, header=False)
-        dataManager.appendCSVFile('pats_condition.csv',arr)
+        df['종목코드'] = df['종목코드'].apply('="{}"'.format)
+        dataManager.appendCSVFile('pats_condition.csv',df)
         print("save condition")

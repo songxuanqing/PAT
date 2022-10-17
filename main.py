@@ -45,21 +45,23 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.kiwoom = kiwoom
         self.is_completed = False
         arr = []
+
+        #계정정보 가져오기
+        self.accountData = AccountData.AccountData(kiwoom)
+        self.accountBalanceInfo = self.accountData.getBalanceInfo()
+
         # 저장소 생성
         # 저장소에서  최근 데이터 가져오기
         #모니터링할 조건식 리스트 가져오기
-        self.monitoredConditionList = []
-        self.autoTrading = AutoTrading.AutoTrading(kiwoom)
-        #조건수 갯수만큼 for문해서 조건만큼 Thread 생성(조건을 변수로 넘긴다)
-        self.autoTrading.addThread()
+        self.dataManager = Database.Database()
+        self.createConditionFile()
+        self.monitoredConditionList = self.getSavedConditionList()
+        self.autoTrading = AutoTrading.AutoTrading(kiwoom,self.monitoredConditionList,self.accountData)
 
 
         # 즐겨찾기 객체생성
         self.favoriteList = FavoriteList.FavoriteList()
         self.favoriteList.setList(arr)
-
-        self.accountData = AccountData.AccountData(kiwoom)
-        self.accountBalanceInfo = self.accountData.getBalanceInfo()
         self.stocklist = StockList.StockList(kiwoom)
         self.stockList = self.stocklist.getList()
         self.candlelist = CandleList.CandleList()
@@ -106,10 +108,6 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.displayChart()
 
         self.ui.show()
-
-        #windows 데이터 저장 관리
-        self.dataManager = Database.Database()
-        self.createConditionFile()
 
 
     #캔들데이터 옵저버
@@ -212,11 +210,16 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
             rows = rows + 1
         if ("MACD" in self.selectedSubIndices) :
             rows = rows + 1
-
+        if rows == 2 :
+            row_width = [0.2, 0.7]
+        elif rows == 3 :
+            row_width = [0.2, 0.2, 0.7]
+        elif rows == 4 :
+            row_width = [0.2, 0.2, 0.2, 0.7]
         # Create subplots and mention plot grid size
         fig = make_subplots(rows=rows, cols=1, shared_xaxes=True,
                             vertical_spacing=0.03,
-                            row_width=[0.2, 0.2, 0.7])
+                            row_width=row_width)
 
         # Plot OHLC on 1st row
         fig.add_trace(go.Candlestick(x=df['date'],
@@ -389,6 +392,10 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         conditionHeaderList = ['종목코드','종목명','매수가','총금액','시작시간','종료시간',
                      '부분익절율','부분익절수량','최대익절율','부분손절율','부분손절수량','최대손절율']
         self.dataManager.createCSVFile("pats_condition.csv",conditionHeaderList)
+
+    def getSavedConditionList(self):
+        df = self.dataManager.readCSVFile("pats_condition.csv")
+        return df
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

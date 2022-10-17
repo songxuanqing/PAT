@@ -7,16 +7,19 @@ import interface.observerOrder as observerOrder
 
 class AutoTrading(observer.Observer, observerOrder.Subject):
     threadList = []
-    def __init__(self,kiwoom):
+    def __init__(self,kiwoom,conditionList,accoutData):
         self.orderQueue = OrderQueue.OrderQueue(kiwoom)
         self._observer_list = []
         self.kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(kiwoom)
-        self.addThread()
+        #조건수만큼 Thread 생성
+        for idx, row in conditionList.iterrows():
+            self.addThread(row,accoutData)
+
         #관찰대상 등록
         self.register_subject(self.kiwoomRealTimeData)
 
+
     def update(self, order):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
-        print("autoTrading")
         self.notify_observers_order(order)
         self.orderQueue.add(order)
 
@@ -24,7 +27,9 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         self.subject = subject
         self.subject.register_observer(self)
 
-    def addThread(self):
+    def addThread(self, condition, accountData):
+        #accountData는 account Data를 수신하는 py 클래스 객체이다.
+        print("condition in Auto Trading"+str(condition))
         th = Thread(target=self.kiwoomRealTimeData.run(), args=())
         self.threadList.append(th)
         th.start()
