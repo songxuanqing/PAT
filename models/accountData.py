@@ -22,7 +22,7 @@ class AccountData():
         self.account_stock_dict = {}
 
         # 종목 분석 관련 변수
-        self.balance_list = {'No': [], '종목코드': [], '종목명': [], '평가금액': [], '수익율(%)': [], '매입가': [], '보유량': [],
+        self.balance_list = {'No': [], '종목코드': [], '종목명': [], '평가금액': [], '수익율(%)': [], '매입가': [], '매입금액':[], '보유량': [],
                              '매매가능수량': [], '현재가': []}
 
         # 화면 번호
@@ -111,6 +111,10 @@ class AccountData():
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "매입가")
                 stock_buy_money = int(stock_buy_money)
 
+                stock_buy_total_money = self.kiwoom.dynamicCall(
+                    "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "매입금액")
+                stock_buy_total_money = int(stock_buy_total_money)
+
                 stock_quantity = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "보유수량")
                 stock_quantity = int(stock_quantity)
@@ -132,6 +136,7 @@ class AccountData():
                 self.balance_list['평가금액'].append(str(stock_evaluation_profit_and_loss))
                 self.balance_list['수익율(%)'].append(str(stock_yield))
                 self.balance_list['매입가'].append(str(stock_buy_money))
+                self.balance_list['매입금액'].append(str(stock_buy_total_money))
                 self.balance_list['보유량'].append(str(stock_quantity))
                 self.balance_list['매매가능수량'].append(str(stock_trade_quantity))
                 self.balance_list['현재가'].append(str(stock_present_price))
@@ -142,7 +147,7 @@ class AccountData():
                 self.cancel_screen_number(self.screen_my_account)
                 self.account_event_loop.exit()
                 self.df = pandas.DataFrame(self.balance_list,
-                                      columns=['No', '종목코드', '종목명', '평가금액', '수익율(%)', '매입가', '보유량', '매매가능수량','현재가'])
+                                      columns=['No', '종목코드', '종목명', '평가금액', '수익율(%)', '매입가', '매입금액', '보유량', '매매가능수량','현재가'])
                 self.df.set_index("No", inplace=True)
                 print("account balance",self.df)
 
