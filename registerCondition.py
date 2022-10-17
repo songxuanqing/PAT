@@ -7,6 +7,7 @@ class RegisterCondition(QtWidgets.QDialog):
         super().__init__()
         self.registerConditionDialog = uic.loadUi("register_condition_dao.ui", self)  # ui 파일 불러오기
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
+        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(lambda: self.saveCondition(dataManager))
         self.registerConditionDialog.show()
 

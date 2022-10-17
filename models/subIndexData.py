@@ -9,7 +9,7 @@ class SubIndexData():
 
     def calc_SMA(self,df,period):
         id_sma = SMAIndicator(close=df['close'],window=period,fillna=True)
-        col = period+'sma'
+        col = str(period)+'sma'
         df[col] = id_sma.sma_indicator()
         return df
 

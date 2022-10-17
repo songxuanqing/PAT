@@ -4,10 +4,10 @@ class SubIndexList():
         self.setList()
 
     def setList(self):
-        self.arr.append("이평선 5일")
-        self.arr.append("이평선 10일")
-        self.arr.append("이평선 20일")
-        self.arr.append("이평선 60일")
+        self.arr.append("5-이평선")
+        self.arr.append("10-이평선")
+        self.arr.append("20-이평선")
+        self.arr.append("60-이평선")
         self.arr.append("RSI")
         self.arr.append("스토캐스틱")
         self.arr.append("MACD")

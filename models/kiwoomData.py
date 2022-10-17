@@ -18,7 +18,6 @@ class KiwoomData(observer.Subject):
         super().__init__()
         self.kiwoom = kiwoom
         self._observer_list = []
-        self.calculator_list = {'index':[],'date':[],'open':[],'high':[],'low':[],'close':[],'volume':[]}
         self.calculator_event_loop = QEventLoop()
 
         # 화면 번호
@@ -26,7 +25,6 @@ class KiwoomData(observer.Subject):
 
         #이벤트 TR슬롯 등록
         self.kiwoom.OnReceiveTrData.connect(self.tr_slot)
-
         self.is_completed_request = False
 
 
@@ -81,7 +79,7 @@ class KiwoomData(observer.Subject):
             self.kiwoom.dynamicCall("CommRqData(QString, QString, int, QString)",
                                     "주식주봉차트조회요청", "opt10082", nPrevNext, self.screen_calculation_stock)
 
-        elif type=="월":
+        elif type=="달":
             # opt10083 TR 요청(주식 월봉차트)
             self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
             self.kiwoom.dynamicCall("SetInputValue(QString, QString)", "기준일자", date)
@@ -102,8 +100,10 @@ class KiwoomData(observer.Subject):
             cnt = self.kiwoom.dynamicCall(
                 "GetRepeatCnt(QString, QString)", sTrCode, sRQName)  # 최대 600일
 
+            calculator_list = {'index': [], 'date': [], 'open': [], 'high': [], 'low': [], 'close': [],
+                               'volume': []}
+
             for i in range(cnt):
-                # self.calculator_list = []
                 close = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "현재가")
                 volume = self.kiwoom.dynamicCall(
@@ -112,43 +112,53 @@ class KiwoomData(observer.Subject):
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "체결시간")
                     # format = yyyymmddHHMM
+                    date = date.replace("            ","")
                     # date_to_time = datetime.strptime(date,"%Y%m%d%H%M")
+                    # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d %H:%M')
                     # date = date_to_time.strftime("%H:%M")
-                    date = date[-4:]
+                    # date = date[-4:]
                 elif self.type == "일" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
                     # format = yyyymmdd
+                    date = date.replace("            ", "")
                     # date_to_time = datetime.strptime(date, "%Y%m%d")
+                    # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d')
                     # date = date_to_time.strftime("%m/%d")
-                    date = date[-4:]
+                    # date = date[-4:]
                 elif self.type == "주" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
                     # format = yyyymmdd
+                    date = date.replace("            ", "")
+                    # date_to_time = datetime.strptime(date, "%Y%m%d")
+                    # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d')
                     # date_to_time = datetime.strptime(date, "%Y%m%d%H%M")
+                    # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d %H:%M')
                     # date = date_to_time.strftime("%m/%d")
-                    date = date[-4:]
-                elif self.type == "월" :
+                    # date = date[-4:]
+                elif self.type == "달" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
                     #format = yyyymm
+                    date = date.replace("            ", "")
                     # date_to_time = datetime.strptime(date, "%Y%m")
+                    # date_to_str = datetime.strftime(date_to_time, '%Y-%m')
                     # date = date_to_time.strftime("%y/%m")
-                    date = date[-4:]
+                    # date = date[-4:]
                 open = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "시가")
                 high = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "고가")
                 low = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "저가")
-                self.calculator_list['index'].append(i)
-                self.calculator_list['date'].append(date)
-                self.calculator_list['open'].append(int(open))
-                self.calculator_list['high'].append(int(high))
-                self.calculator_list['low'].append(int(low))
-                self.calculator_list['close'].append(int(close))
-                self.calculator_list['volume'].append(int(volume))
+                calculator_list['index'].append(i)
+                calculator_list['date'].append(date)
+                calculator_list['open'].append(int(open))
+                calculator_list['high'].append(int(high))
+                calculator_list['low'].append(int(low))
+                calculator_list['close'].append(int(close))
+                calculator_list['volume'].append(int(volume))
 
         # if sPrevNext == "2":
         #     print("if" + sPrevNext)
@@ -157,7 +167,7 @@ class KiwoomData(observer.Subject):
         #                 interval=self.interval)
         # else:
             self.calculator_event_loop.exit()
-            df = pandas.DataFrame(self.calculator_list,
+            df = pandas.DataFrame(calculator_list,
                                   columns=['index','date', 'open', 'high', 'low', 'close', 'volume'])
             df.set_index(df['date'],inplace=True)
             self.is_completed_request = True

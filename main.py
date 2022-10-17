@@ -167,13 +167,13 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
                     df = subIndex.calc_RSI(df)
                 elif (i == "일목균형표"):
                     df = subIndex.calc_ichimoku(df)
-                elif (i == "이평선 5일"):
+                elif (i == "5-이평선"):
                     df = subIndex.calc_SMA(df,5)
-                elif (i == "이평선 10일"):
+                elif (i == "10-이평선"):
                     df = subIndex.calc_SMA(df, 10)
-                elif (i == "이평선 20일"):
+                elif (i == "20-이평선"):
                     df = subIndex.calc_SMA(df, 20)
-                elif (i == "이평선 60일"):
+                elif (i == "60-이평선"):
                     df = subIndex.calc_SMA(df, 60)
                 elif (i == "스토캐스틱"):
                     df = subIndex.calc_stochastic(df)
@@ -200,7 +200,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         print("대기끝")
         self.is_completed = False
         df = self.dfFromModule
-        df = df[df["index"] < 20]
+        df = df[df["index"] < 60]
+        print(df)
         return df
 
     def drawChart(self,df):
@@ -261,7 +262,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
                                              name='전환선'
                                              ), row=1, col=1)
                 elif "이평선" in i:
-                    col = i.split(" ")[1][:1]+"sma"
+                    lenDays = len(i.split("-")[0]) #이평선 날짜수 구하기 ex)이평선 x일 or xx일 따라서 len - 1만큼 파싱
+                    col = i.split("-")[0][:lenDays]+"sma"
                     fig.add_trace(go.Scatter(x=df['date'], y=df[col],
                                              mode="lines", name=i, showlegend=True), row=1, col=1)
                 elif (i == "BB"):
@@ -311,6 +313,24 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
 
         # Do not show OHLC's rangeslider plot
         fig.update(layout_xaxis_rangeslider_visible=False)
+        fig.update_xaxes(nticks=5)
+
+        # fig.update_layout(
+        #     xaxis=dict(
+        #         tickmode='array',
+        #         tickvals=df['date'],
+        #         ticktext=[self.computeFormat(date) for date in df['date']],
+        #     )
+        # )
+        # if "분" in self.selectedCandle:
+        #     fig.update_xaxes(
+        #         tickformat="%H%M\n%m%d")
+        # if ("일" in self.selectedCandle) or ("주" in self.selectedCandle):
+        #     fig.update_xaxes(
+        #         tickformat="%d\n%m")
+        # if "달" in self.selectedCandle:
+        #     fig.update_xaxes(
+        #         tickformat="%m\n%Y")
         self.browser.setHtml(fig.to_html(include_plotlyjs='cdn'))
 
         # ----------------------------------------------------------------------------------#
@@ -371,6 +391,12 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         # ax.legend()
         # plt.tight_layout()
 
+    # def computeFormat(self,date):
+    #     date_to_time = datetime.datetime.strptime(date, "%Y%m%d")
+    #     date_to_str = datetime.datetime.strftime(date_to_time, '%Y-%m-%d')
+    #     print("date_to_str"+date_to_str)
+    #     return date_to_str
+
     #콤보박스 변경 이벤트
     def selectStock(self):
         self.selectedStock = self.cb_stockList.currentText()
@@ -383,7 +409,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
 
     def selectSubIndices(self):
         self.selectedSubIndices = self.cb_subIndexList.currentData()
-        print(self.selectedSubIndices)
+        self.displayChart()
 
     def openRegisterCondition(self):
         registerCondition.RegisterCondition(self.dataManager)

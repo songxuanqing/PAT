@@ -14,7 +14,7 @@ class CandleList():
         self.arr.append("5 분")
         self.arr.append("10 분")
         self.arr.append("30 분")
-        self.arr.append("1 시간")
+        self.arr.append("60 분")
         self.arr.append("1 일")
         self.arr.append("1 주")
         self.arr.append("1 달")
