@@ -48,7 +48,7 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
 
         #계정정보 가져오기
         self.accountData = AccountData.AccountData(kiwoom)
-        self.accountBalanceInfo = self.accountData.getBalanceInfo()
+        self.accountBalanceInfo = self.accountData.get_account_evaluation_balance()
 
         # 저장소 생성
         # 저장소에서  최근 데이터 가져오기
@@ -139,8 +139,6 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
 
     #잔고 테이블 표시
     def displayBalanceTable(self):
-        print("account"+str(self.accountBalanceInfo))
-
         nRows = len(self.accountBalanceInfo.index)
         nColumns = len(self.accountBalanceInfo.columns)
         self.tbl_totalBalance.setRowCount(nRows)

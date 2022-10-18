@@ -15,9 +15,7 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         #조건수만큼 Thread 생성
         for idx, row in conditionList.iterrows():
             #row = condition
-            kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(kiwoom,row,accoutData)
-            self.addThread(kiwoomRealTimeData)
-            self._subject_list.append(kiwoomRealTimeData)
+            self.addThreadAndAppendSubject(kiwoom,row,accoutData)
 
         #관찰대상 등록
         for i in self._subject_list:
@@ -32,10 +30,12 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         self.subject = subject
         self.subject.register_observer(self)
 
-    def addThread(self, threadObj):
-        th = Thread(target=threadObj.run(), args=())
+    def addThreadAndAppendSubject(self, kiwoom, row, accoutData):
+        kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(kiwoom, row, accoutData)
+        th = Thread(target=kiwoomRealTimeData.run(), args=())
         self.threadList.append(th)
         th.start()
+        self._subject_list.append(kiwoomRealTimeData)
 
     def register_observer_order(self, observer):
         if observer in self._observer_list:
