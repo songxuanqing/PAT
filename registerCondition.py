@@ -24,7 +24,7 @@ class RegisterCondition(QtWidgets.QDialog):
         lossRate = self.et_lossRate.toPlainText()
         lossRateVolume = self.et_lossRateVolume.toPlainText()
         maxLossRate = self.et_maxLossRate.toPlainText()
-        arr = [stockCode, stockName, buyPrice,totalBuyAmount,
+        arr = [str(stockCode), stockName, buyPrice,totalBuyAmount,
                            buyStartTime,buyEndTime,profitRate,profitRateVolume,maxProfitRate,
                            lossRate,lossRateVolume,maxLossRate]
         df = pd.DataFrame([arr],

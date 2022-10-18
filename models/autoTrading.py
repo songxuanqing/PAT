@@ -10,6 +10,7 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
     def __init__(self,kiwoom,conditionList,accoutData):
         #accountData는 account Data를 수신하는 py 클래스 객체이다.
         self.orderQueue = OrderQueue.OrderQueue(kiwoom)
+        self.register_subject(self.orderQueue)
         self._observer_list = []
         self._subject_list = []
         #조건수만큼 Thread 생성
@@ -22,9 +23,14 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
             self.register_subject(i)
 
 
-    def update(self, order):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
-        self.notify_observers_order(order)
-        self.orderQueue.add(order)
+    def update(self, source, order):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
+        if source == "kiwoomRealTimeData":
+            self.orderQueue.add(order)
+        elif source == "orderQueue":
+            msg = "종목명"+order.종목명+"\n"+"주문유형:"+order.주문유형+"\n"\
+                  +"주문가격:"+order.주문가격+"\n"+"주문수량:"+order.주문수량+"\n"\
+                  +"현재수익율:"+order.현재수익율+"\n"+"목표익절율:"+order.목표익절율+"\n"+"목표손절율:"+order.목표손절율
+            self.notify_observers_order(msg)
 
     def register_subject(self, subject):
         self.subject = subject

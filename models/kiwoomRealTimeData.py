@@ -1,6 +1,7 @@
 import interface.observerOrderQueue as observer
 import datetime
 import models.accountData as AccountData
+import models.order as Order
 
 class KiwoomRealTimeData(observer.Subject):
     kiwoom = None
@@ -43,8 +44,9 @@ class KiwoomRealTimeData(observer.Subject):
 
     def notify_observers(self,order):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
         print("kiwoomRealTimeData notify observer")
+        source = "kiwoomRealTimeData"
         for observer in self._observer_list:
-            observer.update(order)
+            observer.update(source,order)
 
 
     def updateAccountDate(self):
@@ -52,10 +54,10 @@ class KiwoomRealTimeData(observer.Subject):
         self.balanceDf = self.accountData.get_account_evaluation_balance()
         self.dataRows = self.balanceDf.loc[self.balanceDf['종목코드'] == str(self.code)]
         print(str(self.code)+"data rows"+str(self.dataRows))
-        self.profitRate = self.dataRows['수익율(%)'][0]
+        self.currentProfitRate = self.dataRows['수익율(%)'][0]
         self.buyTotalMoney = self.dataRows['매입금액'][0]
         self.canSellVolume = self.dataRows['매매가능수량'][0]
-        print("평가잔고 정보 가쟈오기" + "\n" + str(self.profitRate) + "\n" + str(self.buyTotalMoney) + "\n" + str(
+        print("평가잔고 정보 가쟈오기" + "\n" + str(self.currentProfitRate) + "\n" + str(self.buyTotalMoney) + "\n" + str(
             self.canSellVolume))
 
     def run(self):
@@ -106,18 +108,13 @@ class KiwoomRealTimeData(observer.Subject):
             #3. 현재가격이 목표가(매수가)보다 크거나 같은지.
             #4. 목표가로 구매하는 주문 생성
             if (startTime.time()<now.time()) and (now.time()<endTime.time()):
-                print("1111"+str(self.totalBuyAmount))
-                print("2222"+str(self.buyTotalMoney))
-                print("3333"+str(self.totalBuyAmount >= self.buyTotalMoney))
                 if (self.totalBuyAmount >= self.buyTotalMoney):
                    if currentPrice >= self.buyPrice:
                        print("create buy order")
                        #최대 구매할수 있는 금액에서 현재보유하고 있는량을 제외하고 남은 금액을 현재가로 나눈만큼 구매
                        buyVolume = int((self.totalBuyAmount - self.buyTotalMoney)/currentPrice)
-                       buy_order = {"사용자 구분명": "현재가매수", "화면번호": "0101", "계좌번호": self.accountData.getAccountInfo(),
-                                "주문유형": 1, "종목코드": code, "주문수량": buyVolume, "주문가격": self.buyPrice,
-                                "거래구분": "00",
-                                "원주문번호": ""}
+                       buy_order = Order.Order("현재가매수", "0101", self.account.getAccountInfo(), 1, code, self.codeName,buyVolume,
+                                                self.buyPrice, "00", "",self.profitRate,self.lossRate,self.currentProfitRate,now)
                        # 주문생성시만 어카운트 정보 업데이트
                        self.updateAccountDate()
                        self.notify_observers(buy_order)
@@ -131,27 +128,25 @@ class KiwoomRealTimeData(observer.Subject):
 
             sellVolume = 0
             trySell = False
-            if self.profitRate >= self.maxProfitRate:
+            if self.currentProfitRate >= self.maxProfitRate:
                 sellVolume = self.canSellVolume
                 trySell = True
-            elif (self.profitRate < self.maxProfitRate) and (self.profitRate >= self.profitRate):
+            elif (self.currentProfitRate < self.maxProfitRate) and (self.currentProfitRate >= self.profitRate):
                 sellVolume = int(self.canSellVolume * self.profitSellVolume)
                 trySell = True
-            elif (self.profitRate >= self.maxLossRate) and (self.profitRate < self.lossRate):
+            elif (self.currentProfitRate >= self.maxLossRate) and (self.currentProfitRate < self.lossRate):
                 sellVolume = int(self.canSellVolume * self.lossSellVolume)
                 trySell = True
-            elif self.profitRate <= self.maxLossRate:
+            elif self.currentProfitRate <= self.maxLossRate:
                 sellVolume = self.canSellVolume
                 trySell = True
 
             print("create sell order")
             if trySell:
-                sell_order = {"사용자 구분명":"현재가매도","화면번호":"0102", "계좌번호":self.account.getAccountInfo(),
-                     "주문유형":2, "종목코드":code,"주문수량":sellVolume,"주문가격":currentPrice,
-                     "거래구분":"00",
-                     "원주문번호":""}
+                sell_order = Order.Order("현재가매도","0102",self.account.getAccountInfo(),2,code,self.codeName,sellVolume,currentPrice,"00","",self.profitRate,self.lossRate,self.currentProfitRate,now)
                 #주문생성시만 어카운트 정보 업데이트
                 self.updateAccountDate()
+                self.notify_observers(sell_order)
             #SendOrder(BSTR sRQName, // 사용자 구분명
             # BSTR sScreenNo, // 화면번호
             # BSTR sAccNo,  // 계좌번호 10자리
@@ -162,8 +157,6 @@ class KiwoomRealTimeData(observer.Subject):
             # BSTR sHogaGb,   // 거래구분(혹은 호가구분)은 아래 참고
             # BSTR sOrgOrderNo  // 원주문번호. 신규주문에는 공백 입력, 정정/취소시 입력합니다.
             # )
-
-            self.notify_observers(sell_order)
                 # self.hold = True
                 # quantity = int(self.amount / 현재가)
                 # self.SendOrder("매수", "8000", self.account, 1, "229200", quantity, 0, "03", "")
