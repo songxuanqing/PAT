@@ -26,6 +26,7 @@ import models.kiwoomData as KiwoomData
 import models.autoTrading as AutoTrading
 import models.subIndexData as SubIndexData
 import models.database as Database
+import interface.conditionRegistration as ConditionRegistration
 import interface.observer as observer
 import interface.observerOrder as observerOrder
 import interface.observerSubIndexList as observerSubIndexList
@@ -39,7 +40,7 @@ def OnEventConnect(err_code):
         print("fail")
 
 
-class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observer, observerSubIndexList.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
+class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer.Observer, observerOrder.Observer, observerSubIndexList.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
     def __init__(self,kiwoom):  # Window 클래스의 초기화 함수(생성자)
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.kiwoom = kiwoom
@@ -106,6 +107,8 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.displayBalanceTable()
         #차트 그리기
         self.displayChart()
+        #조건테이블 나타내기
+        self.displayConditionTable()
 
         self.ui.show()
 
@@ -137,7 +140,33 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.subject_subIndex = subject_subIndex
         self.subject_subIndex.register_observer_subIndex(self)
 
-    #잔고 테이블 표시
+    def update_condition(self, data):
+        print("registered")
+        self.monitoredConditionList = self.getSavedConditionList()
+        self.displayConditionTable()
+
+    def register_subject_condition(self,subject):
+        self.subject_condition = subject
+        self.subject_condition.register_observer_condition(self)
+
+
+    #조건 테이블 표시
+    def displayConditionTable(self):
+        nRows = len(self.monitoredConditionList.index)
+        nColumns = len(self.monitoredConditionList.columns)
+        self.tbl_manageConditions.setRowCount(nRows)
+        self.tbl_manageConditions.setColumnCount(nColumns)
+
+        for i in range(self.tbl_manageConditions.rowCount()):
+            for j in range(self.tbl_manageConditions.columnCount()):
+                x = self.monitoredConditionList.iloc[i, j]
+                self.tbl_manageConditions.setItem(i, j, QtWidgets.QTableWidgetItem(str(x)))
+
+        self.tbl_manageConditions.setHorizontalHeaderLabels(self.monitoredConditionList.columns)
+        self.tbl_manageConditions.resizeColumnsToContents()
+        self.tbl_manageConditions.resizeRowsToContents()
+
+        # 잔고 테이블 표시
     def displayBalanceTable(self):
         nRows = len(self.accountBalanceInfo.index)
         nColumns = len(self.accountBalanceInfo.columns)
@@ -410,15 +439,18 @@ class MainWindow(QtWidgets.QMainWindow, observer.Observer, observerOrder.Observe
         self.displayChart()
 
     def openRegisterCondition(self):
-        registerCondition.RegisterCondition(self.dataManager)
+        currentConditionLength = len(self.monitoredConditionList)
+        regCondi = registerCondition.RegisterCondition(self.dataManager,currentConditionLength)
+        self.register_subject_condition(regCondi)
 
     def createConditionFile(self):
-        conditionHeaderList = ['종목코드','종목명','매수가','총금액','시작시간','종료시간',
+        conditionHeaderList = ['ID','종목코드','종목명','매수가','총금액','시작시간','종료시간',
                      '부분익절율','부분익절수량','최대익절율','부분손절율','부분손절수량','최대손절율']
         self.dataManager.createCSVFile("pats_condition.csv",conditionHeaderList)
 
     def getSavedConditionList(self):
         df = self.dataManager.readCSVFile("pats_condition.csv")
+        print(str(df))
         return df
 
 if __name__ == '__main__':

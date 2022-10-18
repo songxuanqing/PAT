@@ -57,7 +57,7 @@
        <string>종목 이름</string>
       </property>
      </widget>
-     <widget class="QTextBrowser" name="tv_codeName">
+     <widget class="QTextEdit" name="tv_codeName">
       <property name="geometry">
        <rect>
         <x>150</x>
@@ -70,9 +70,6 @@
        <font>
         <kerning>true</kerning>
        </font>
-      </property>
-      <property name="openLinks">
-       <bool>true</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label">
@@ -247,7 +244,7 @@
         <hour>0</hour>
         <minute>0</minute>
         <second>0</second>
-        <year>1997</year>
+        <year>1999</year>
         <month>1</month>
         <day>1</day>
        </datetime>
@@ -615,7 +612,4 @@
    </hints>
   </connection>
  </connections>
- <buttongroups>
-  <buttongroup name="buttonGroup"/>
- </buttongroups>
 </ui>

@@ -75,7 +75,11 @@
         <height>131</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="bx_tab_manageAutoOrders"/>
+      <layout class="QVBoxLayout" name="bx_tab_manageAutoOrders">
+       <item>
+        <widget class="QTableWidget" name="tbl_manageConditions"/>
+       </item>
+      </layout>
      </widget>
      <widget class="QPushButton" name="bt_addCondition">
       <property name="geometry">
