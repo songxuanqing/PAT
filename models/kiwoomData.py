@@ -112,7 +112,7 @@ class KiwoomData(observer.Subject):
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "체결시간")
                     # format = yyyymmddHHMM
-                    date = date.replace("            ","")
+                    date = date.replace("      ","")
                     # date_to_time = datetime.strptime(date,"%Y%m%d%H%M")
                     # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d %H:%M')
                     # date = date_to_time.strftime("%H:%M")

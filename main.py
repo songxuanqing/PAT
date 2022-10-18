@@ -340,15 +340,9 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
 
         # Do not show OHLC's rangeslider plot
         fig.update(layout_xaxis_rangeslider_visible=False)
-        fig.update_xaxes(nticks=5)
-
-        # fig.update_layout(
-        #     xaxis=dict(
-        #         tickmode='array',
-        #         tickvals=df['date'],
-        #         ticktext=[self.computeFormat(date) for date in df['date']],
-        #     )
-        # )
+        fig.update_xaxes(tickmode='array',
+                         tickvals=df['date'],
+                         ticktext=[d[-4:] for d in df['date']])
         # if "분" in self.selectedCandle:
         #     fig.update_xaxes(
         #         tickformat="%H%M\n%m%d")
@@ -417,12 +411,6 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         # # bottom_axes.set_xlabel('Date', fontsize=15)
         # ax.legend()
         # plt.tight_layout()
-
-    # def computeFormat(self,date):
-    #     date_to_time = datetime.datetime.strptime(date, "%Y%m%d")
-    #     date_to_str = datetime.datetime.strftime(date_to_time, '%Y-%m-%d')
-    #     print("date_to_str"+date_to_str)
-    #     return date_to_str
 
     #콤보박스 변경 이벤트
     def selectStock(self):

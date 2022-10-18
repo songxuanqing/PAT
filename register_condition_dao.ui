@@ -57,21 +57,6 @@
        <string>종목 이름</string>
       </property>
      </widget>
-     <widget class="QTextEdit" name="tv_codeName">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>60</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <kerning>true</kerning>
-       </font>
-      </property>
-     </widget>
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
@@ -85,19 +70,6 @@
        <string>종목 코드</string>
       </property>
      </widget>
-     <widget class="QPlainTextEdit" name="et_code">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>30</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-     </widget>
      <widget class="QPushButton" name="bt_searchCode">
       <property name="geometry">
        <rect>
@@ -109,6 +81,26 @@
       </property>
       <property name="text">
        <string>검색</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_code">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>25</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="tv_codeName">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>56</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
       </property>
      </widget>
     </widget>
@@ -148,32 +140,6 @@
       </property>
       <property name="text">
        <string>매수가</string>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="et_buyPrice">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>24</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="et_totalBuyAmout">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>54</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_6">
@@ -266,6 +232,26 @@
        <string>~</string>
       </property>
      </widget>
+     <widget class="QLineEdit" name="et_buyPrice">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>23</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_totalBuyAmout">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>53</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
     <widget class="QLabel" name="label_10">
      <property name="geometry">
@@ -318,32 +304,6 @@
        <string>부분 손절율</string>
       </property>
      </widget>
-     <widget class="QPlainTextEdit" name="et_lossRate">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>30</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="et_lossRateVolume">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>60</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_13">
       <property name="geometry">
        <rect>
@@ -355,19 +315,6 @@
       </property>
       <property name="text">
        <string>최대 손절율</string>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="et_maxLossRate">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>90</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_16">
@@ -409,6 +356,36 @@
        <string>(%)</string>
       </property>
      </widget>
+     <widget class="QLineEdit" name="et_lossRate">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>26</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_lossRateVolume">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>57</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_maxLossRate">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>86</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_3">
      <property name="geometry">
@@ -448,32 +425,6 @@
        <string>부분 익절율</string>
       </property>
      </widget>
-     <widget class="QPlainTextEdit" name="et_profitRate">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>30</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="et_profitRateVolume">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>60</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_9">
       <property name="geometry">
        <rect>
@@ -485,19 +436,6 @@
       </property>
       <property name="text">
        <string>최대 익절율</string>
-      </property>
-     </widget>
-     <widget class="QPlainTextEdit" name="et_maxProfitRate">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>90</y>
-        <width>211</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="acceptDrops">
-       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_20">
@@ -537,6 +475,36 @@
       </property>
       <property name="text">
        <string>(%)</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_profitRate">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>29</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_profitRateVolume">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>58</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="et_maxProfitRate">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>87</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
       </property>
      </widget>
     </widget>

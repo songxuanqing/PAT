@@ -10,6 +10,8 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject):
         self.registerConditionDialog = uic.loadUi("register_condition_dao.ui", self)  # ui 파일 불러오기
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
+        self.et_code.setInputMask("000000")
+        #range validation넣기
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(lambda: self.saveCondition(dataManager))
         self.registerConditionDialog.show()
 
