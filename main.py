@@ -140,10 +140,11 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.subject_subIndex = subject_subIndex
         self.subject_subIndex.register_observer_subIndex(self)
 
-    def update_condition(self, data):
+    def update_condition(self, condition):
         print("registered")
         self.monitoredConditionList = self.getSavedConditionList()
         self.displayConditionTable()
+        self.autoTrading.addCondition(condition)
 
     def register_subject_condition(self,subject):
         self.subject_condition = subject

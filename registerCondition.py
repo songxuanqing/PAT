@@ -38,11 +38,11 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject):
                                    '부분손절율','부분손절수량','최대손절율'])
         # df['종목코드'] = df['종목코드'].apply('{}'.format)
         dataManager.appendCSVFile('pats_condition.csv',df)
-        self.notify_observers_condition(id)
+        self.notify_observers_condition(df) #df = condition
         print("save condition")
 
     def register_observer_condition(self, observer):
         self.observer = observer
 
-    def notify_observers_condition(self,id):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
-        self.observer.update_condition(id)
+    def notify_observers_condition(self,condition):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
+        self.observer.update_condition(condition)

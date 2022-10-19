@@ -5,7 +5,7 @@ import models.order as Order
 
 class KiwoomRealTimeData(observer.Subject):
     kiwoom = None
-    def __init__(self,kiwoom,condition,accountData):
+    def __init__(self,kiwoom,condition):
         print("real time data")
         super().__init__()
         self.kiwoom = kiwoom

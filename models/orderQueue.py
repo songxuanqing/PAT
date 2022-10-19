@@ -1,4 +1,5 @@
 from threading import Thread
+from time import sleep
 import interface.observerOrderQueue as observer
 
 class OrderQueue(observer.Subject):
@@ -6,7 +7,8 @@ class OrderQueue(observer.Subject):
     _observer_list = []
     def __init__(self,kiwoom):
         self.kiwoom = kiwoom
-        th = Thread(target=self.run(), args=())
+        th = Thread(target=self.run, args=())
+        th.daemon = True
         th.start()
 
     def register_observer(self, observer):
@@ -31,15 +33,14 @@ class OrderQueue(observer.Subject):
         self.list.append(order)
 
     def run(self):
-        print('Hello, world!')
-        # while True:
-        #     print('Hello, world!')
-        #     if self.list:
-        #         order = self.list.pop()
-        #         self.kiwoom.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-        #                              [order.사용자구분명, order.화면번호, order.계좌번호, order.주문유형,
-        #                               order.종목코드, order.주문수량, order.주문가격, order.거래구분, order.원주문번호])
-        #         self.notify_observers(order)
+        while True:
+            sleep(1)
+            if self.list:
+                order = self.list.pop()
+                self.kiwoom.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                                     [order.사용자구분명, order.화면번호, order.계좌번호, order.주문유형,
+                                      order.종목코드, order.주문수량, order.주문가격, order.거래구분, order.원주문번호])
+                self.notify_observers(order)
 
 
 

@@ -7,16 +7,22 @@ import interface.observerOrder as observerOrder
 
 class AutoTrading(observer.Observer, observerOrder.Subject):
     threadList = []
+    kiwoom = None
     def __init__(self,kiwoom,conditionList,accoutData):
         #accountData는 account Data를 수신하는 py 클래스 객체이다.
         self.orderQueue = OrderQueue.OrderQueue(kiwoom)
         self.register_subject(self.orderQueue)
+        self.kiwoom = kiwoom
         self._observer_list = []
         self._subject_list = []
+        self.conditionList = conditionList
         #조건수만큼 Thread 생성
         for idx, row in conditionList.iterrows():
             #row = condition
-            self.addThreadAndAppendSubject(kiwoom,row,accoutData)
+            self.addCondition(row)
+            # kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(self.kiwoom, row)
+            # self.addThread(kiwoomRealTimeData)
+            # self._subject_list.append(kiwoomRealTimeData)
 
         #관찰대상 등록
         for i in self._subject_list:
@@ -36,11 +42,16 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         self.subject = subject
         self.subject.register_observer(self)
 
-    def addThreadAndAppendSubject(self, kiwoom, row, accoutData):
-        kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(kiwoom, row, accoutData)
-        th = Thread(target=kiwoomRealTimeData.run(), args=())
+    def addThread(self, kiwoomRealTimeData):
+        th = Thread(target=kiwoomRealTimeData.run, args=())
         self.threadList.append(th)
+        th.daemon = True
         th.start()
+
+    def addCondition(self,condition):
+        self.conditionList.append(condition)
+        kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(self.kiwoom, condition)
+        self.addThread(kiwoomRealTimeData)
         self._subject_list.append(kiwoomRealTimeData)
 
     def register_observer_order(self, observer):
