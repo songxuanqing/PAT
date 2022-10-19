@@ -24,8 +24,8 @@ class AccountData():
         self.total_yield = 0
         self.account_stock_dict = {}
         # 화면 번호
-        self.screen_my_account = "1000"
-
+        self.screen_account_list = ["1000","1001","1002","1003","1004","1005","1006","1007","1008","1009"]
+        self.call_count = 0
         #이벤트 TR슬롯 등록록
         self.event_collection()
         self.get_account_info()  # 계좌 번호만 얻어오기
@@ -52,6 +52,9 @@ class AccountData():
     #잔고정보 요청
     def get_account_evaluation_balance(self, nPrevNext=0):
         print("self.account_number"+self.account_number)
+        self.screen_my_account = self.screen_account_list[int(str(self.call_count)[-1:])]
+        self.call_count = self.call_count + 1
+        print("self.account_number" + self.screen_my_account)
         # 종목 분석 관련 변수
         self.kiwoom.dynamicCall("SetInputValue(QString, QString)",
                          "계좌번호", self.account_number)

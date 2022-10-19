@@ -429,7 +429,7 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
 
     def openRegisterCondition(self):
         currentConditionLength = len(self.monitoredConditionList)
-        regCondi = registerCondition.RegisterCondition(self.dataManager,currentConditionLength)
+        regCondi = registerCondition.RegisterCondition(self.dataManager,currentConditionLength,self.stockList)
         self.register_subject_condition(regCondi)
 
     def createConditionFile(self):

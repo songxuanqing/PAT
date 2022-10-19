@@ -3,7 +3,6 @@
 class StockList():
     kiwoom = None
     arr = []
-    arr.append("005930:삼성전자")
     def __init__(self,kiwoom):
         self.kiwoom = kiwoom
         self.setList("0")

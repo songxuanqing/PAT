@@ -1,13 +1,18 @@
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 import pandas as pd
 import interface.conditionRegistration as ConditionRegistration
+import interface.codeSearch as codeSearch
+import searchCode
 
-class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject):
-    def __init__(self,dataManager,currentConditionLength):
+class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSearch.Observer):
+    def __init__(self,dataManager,currentConditionLength,stockList):
         super().__init__()
+        self.stockList = stockList
         self.currentConditionLength = currentConditionLength
         self.registerConditionDialog = uic.loadUi("register_condition_dao.ui", self)  # ui 파일 불러오기
+        self.bt_searchCode.clicked.connect(self.clickSearch)
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
         self.et_code.setInputMask("000000")
@@ -17,18 +22,18 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject):
 
     def saveCondition(self,dataManager):
         id = self.currentConditionLength+1
-        stockCode = self.et_code.toPlainText()
-        stockName = self.tv_codeName.toPlainText()
-        buyPrice = self.et_buyPrice.toPlainText()
-        totalBuyAmount = self.et_totalBuyAmout.toPlainText()
+        stockCode = self.et_code.text()
+        stockName = self.tv_codeName.text()
+        buyPrice = self.et_buyPrice.text()
+        totalBuyAmount = self.et_totalBuyAmout.text()
         buyStartTime = self.et_buyStartTime.dateTime().toString("HH:mm")
         buyEndTime = self.et_buyEndTime.dateTime().toString("HH:mm")
-        profitRate = self.et_profitRate.toPlainText()
-        profitRateVolume = self.et_profitRateVolume.toPlainText()
-        maxProfitRate = self.et_maxProfitRate.toPlainText()
-        lossRate = self.et_lossRate.toPlainText()
-        lossRateVolume = self.et_lossRateVolume.toPlainText()
-        maxLossRate = self.et_maxLossRate.toPlainText()
+        profitRate = self.et_profitRate.text()
+        profitRateVolume = self.et_profitRateVolume.text()
+        maxProfitRate = self.et_maxProfitRate.text()
+        lossRate = self.et_lossRate.text()
+        lossRateVolume = self.et_lossRateVolume.text()
+        maxLossRate = self.et_maxLossRate.text()
         arr = [id,str(stockCode), stockName, buyPrice,totalBuyAmount,
                            buyStartTime,buyEndTime,profitRate,profitRateVolume,maxProfitRate,
                            lossRate,lossRateVolume,maxLossRate]
@@ -38,8 +43,22 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject):
                                    '부분손절율','부분손절수량','최대손절율'])
         # df['종목코드'] = df['종목코드'].apply('{}'.format)
         dataManager.appendCSVFile('pats_condition.csv',df)
-        self.notify_observers_condition(df) #df = condition
-        print("save condition")
+        for idx, row in df.iterrows():
+            self.notify_observers_condition(row) #df = condition
+            print("save condition")
+
+    def clickSearch(self):
+        keyword = self.et_code.text()
+        searchCodeWindow = searchCode.SearchCode(keyword,self.stockList)
+        self.register_subject_searchCode(searchCodeWindow)
+
+    def update_searchCode(self, code, name):
+        self.et_code.setText(code)
+        self.tv_codeName.setText(name)
+
+    def register_subject_searchCode(self, subject):
+        self.subject = subject
+        self.subject.register_observer_searchCode(self)
 
     def register_observer_condition(self, observer):
         self.observer = observer

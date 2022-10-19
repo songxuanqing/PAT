@@ -6,7 +6,7 @@ import models.order as Order
 class KiwoomRealTimeData(observer.Subject):
     kiwoom = None
     def __init__(self,kiwoom,condition):
-        print("real time data")
+        print("real time data"+condition['종목코드'])
         super().__init__()
         self.kiwoom = kiwoom
         self._observer_list = []
@@ -15,15 +15,15 @@ class KiwoomRealTimeData(observer.Subject):
         self.code = condition['종목코드']
         self.codeName = condition['종목명']
         self.buyPrice = condition['매수가']
-        self.totalBuyAmount = condition['총금액']
-        self.buyStartTime = condition['시작시간']
-        self.buyEndTime = condition['종료시간']
-        self.profitRate = condition['부분익절율']
-        self.profitSellVolume = condition['부분익절수량']
-        self.maxProfitRate = condition['최대익절율']
-        self.lossRate = condition['부분손절율']
-        self.lossSellVolume = condition['부분손절수량']
-        self.maxLossRate = condition['최대손절율']
+        self.totalBuyAmount = int(condition['총금액'])
+        self.buyStartTime = str(condition['시작시간'])
+        self.buyEndTime = str(condition['종료시간'])
+        self.profitRate = float(condition['부분익절율'])
+        self.profitSellVolume = int(condition['부분익절수량'])
+        self.maxProfitRate = float(condition['최대익절율'])
+        self.lossRate = float(condition['부분손절율'])
+        self.lossSellVolume = int(condition['부분손절수량'])
+        self.maxLossRate = float(condition['최대손절율'])
 
         print("생성할때는 제대로 되나?11111111")
         self.accountData = AccountData.AccountData(kiwoom)
@@ -50,13 +50,15 @@ class KiwoomRealTimeData(observer.Subject):
 
 
     def updateAccountDate(self):
-        print("update account data")
         self.balanceDf = self.accountData.get_account_evaluation_balance()
-        self.dataRows = self.balanceDf.loc[self.balanceDf['종목코드'] == str(self.code)]
-        print(str(self.code)+"data rows"+str(self.dataRows))
-        self.currentProfitRate = self.dataRows['수익율(%)'][0]
-        self.buyTotalMoney = self.dataRows['매입금액'][0]
-        self.canSellVolume = self.dataRows['매매가능수량'][0]
+        # self.dataRows = None
+        # for idx, row in self.balanceDf.iterrows():
+        #     if row['종목코드'] == self.code:
+        #         self.dataRows = row
+        self.dataRows = self.balanceDf[self.balanceDf['종목코드'] == self.code]
+        self.currentProfitRate = float(self.dataRows['수익율(%)'][0])
+        self.buyTotalMoney = int(self.dataRows['매입금액'][0])
+        self.canSellVolume = int(self.dataRows['매매가능수량'][0])
         print("평가잔고 정보 가쟈오기" + "\n" + str(self.currentProfitRate) + "\n" + str(self.buyTotalMoney) + "\n" + str(
             self.canSellVolume))
 
@@ -93,7 +95,7 @@ class KiwoomRealTimeData(observer.Subject):
             currentPrice = self.GetCommRealData(code, 10)
             currentPrice = abs(int(currentPrice))          # +100, -100
             time = self.GetCommRealData(code, 20)
-
+            print("currentPrice"+str(currentPrice))
             # 시장가
             # marketPrice = self.GetCommRealData(code, 16)
             # marketPrice= abs(int(marketPrice))          # +100, -100
@@ -113,7 +115,7 @@ class KiwoomRealTimeData(observer.Subject):
                        print("create buy order")
                        #최대 구매할수 있는 금액에서 현재보유하고 있는량을 제외하고 남은 금액을 현재가로 나눈만큼 구매
                        buyVolume = int((self.totalBuyAmount - self.buyTotalMoney)/currentPrice)
-                       buy_order = Order.Order("현재가매수", "0101", self.account.getAccountInfo(), 1, code, self.codeName,buyVolume,
+                       buy_order = Order.Order("현재가매수", "0101", self.accountData.getAccountInfo(), 1, code, self.codeName,buyVolume,
                                                 self.buyPrice, "00", "",self.profitRate,self.lossRate,self.currentProfitRate,now)
                        # 주문생성시만 어카운트 정보 업데이트
                        self.updateAccountDate()
@@ -143,7 +145,7 @@ class KiwoomRealTimeData(observer.Subject):
 
             print("create sell order")
             if trySell:
-                sell_order = Order.Order("현재가매도","0102",self.account.getAccountInfo(),2,code,self.codeName,sellVolume,currentPrice,"00","",self.profitRate,self.lossRate,self.currentProfitRate,now)
+                sell_order = Order.Order("현재가매도","0102",self.accountData.getAccountInfo(),2,code,self.codeName,sellVolume,currentPrice,"00","",self.profitRate,self.lossRate,self.currentProfitRate,now)
                 #주문생성시만 어카운트 정보 업데이트
                 self.updateAccountDate()
                 self.notify_observers(sell_order)

@@ -43,7 +43,7 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         self.subject.register_observer(self)
 
     def addThread(self, kiwoomRealTimeData):
-        th = Thread(target=kiwoomRealTimeData.run, args=())
+        th = Thread(target=kiwoomRealTimeData.run(), args=())
         self.threadList.append(th)
         th.daemon = True
         th.start()
