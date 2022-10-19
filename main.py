@@ -79,7 +79,7 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.register_subject_subIndex(self.cb_subIndexList)
 
         self.selectedStock = "005930 : 삼성전자"
-        self.selectedCandle = "1 일"
+        self.selectedCandle = "1 달"
         self.selectedSubIndices = ["RSI"]
 
         self.ui = uic.loadUi("main.ui",self) #ui 파일 불러오기
@@ -341,9 +341,75 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
 
         # Do not show OHLC's rangeslider plot
         fig.update(layout_xaxis_rangeslider_visible=False)
-        fig.update_xaxes(tickmode='array',
-                         tickvals=df['date'],
-                         ticktext=[d[-4:] for d in df['date']])
+        # fig.update(layout_xaxis2_rangeslider_visible=True)
+
+        if "분" in self.selectedCandle :
+            fig.update_xaxes(
+                rangebreaks=[
+                    # NOTE: Below values are bound (not single values), ie. hide x to y
+                    dict(bounds=["sat", "mon"]),  # hide weekends, eg. hide sat to before mon
+                    dict(bounds=[15.55, 9], pattern="hour"),  # hide hours outside of 9.30am-4pm
+                    dict(bounds=[15.32, 15.49], pattern="hour"),
+                ]
+            )
+        else :
+            fig.update_xaxes(
+                rangebreaks=[
+                    # NOTE: Below values are bound (not single values), ie. hide x to y
+                    dict(bounds=["sat", "mon"]),  # hide weekends, eg. hide sat to before mon
+                ]
+            )
+
+        # fig.update_xaxes(tickmode='array',
+        #                  tickvals=df['date'],
+        #                  ticktext=[d[-4:] for d in df['date']])
+
+        fig.update_layout(
+            autosize=True,
+            margin=dict(
+                l=10,
+                r=10,
+                b=10,
+                t=10,
+                pad=2
+            ))
+        fig.update_layout(legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01
+        ))
+
+        # Add range slider
+        # fig.update_layout(
+        #     xaxis2=dict(
+        #         rangeselector=dict(
+        #             buttons=list([
+        #                 dict(count=1,
+        #                      label="1m",
+        #                      step="month",
+        #                      stepmode="backward"),
+        #                 dict(count=6,
+        #                      label="6m",
+        #                      step="month",
+        #                      stepmode="backward"),
+        #                 dict(count=1,
+        #                      label="YTD",
+        #                      step="year",
+        #                      stepmode="todate"),
+        #                 dict(count=1,
+        #                      label="1y",
+        #                      step="year",
+        #                      stepmode="backward"),
+        #                 dict(step="all")
+        #             ])
+        #         ),
+        #         rangeslider=dict(
+        #             visible=True
+        #         ),
+        #         type="date"
+        #     )
+        # )
         # if "분" in self.selectedCandle:
         #     fig.update_xaxes(
         #         tickformat="%H%M\n%m%d")

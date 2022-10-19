@@ -111,9 +111,9 @@ class KiwoomData(observer.Subject):
                 if self.type == "분" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "체결시간")
-                    # format = yyyymmddHHMM
+                    # format = yyyymmddHHMMSS
                     date = date.replace("      ","")
-                    # date_to_time = datetime.strptime(date,"%Y%m%d%H%M")
+                    date_to_time = datetime.strptime(date,"%Y%m%d%H%M%S")
                     # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d %H:%M')
                     # date = date_to_time.strftime("%H:%M")
                     # date = date[-4:]
@@ -122,7 +122,7 @@ class KiwoomData(observer.Subject):
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
                     # format = yyyymmdd
                     date = date.replace("            ", "")
-                    # date_to_time = datetime.strptime(date, "%Y%m%d")
+                    date_to_time = datetime.strptime(date, "%Y%m%d")
                     # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d')
                     # date = date_to_time.strftime("%m/%d")
                     # date = date[-4:]
@@ -131,18 +131,17 @@ class KiwoomData(observer.Subject):
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
                     # format = yyyymmdd
                     date = date.replace("            ", "")
-                    # date_to_time = datetime.strptime(date, "%Y%m%d")
+                    date_to_time = datetime.strptime(date, "%Y%m%d")
                     # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d')
-                    # date_to_time = datetime.strptime(date, "%Y%m%d%H%M")
-                    # date_to_str = datetime.strftime(date_to_time, '%Y-%m-%d %H:%M')
                     # date = date_to_time.strftime("%m/%d")
                     # date = date[-4:]
                 elif self.type == "달" :
                     date = self.kiwoom.dynamicCall(
                         "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "일자")
-                    #format = yyyymm
+                    #format = yyyymmdd
+                    print(date)
                     date = date.replace("            ", "")
-                    # date_to_time = datetime.strptime(date, "%Y%m")
+                    date_to_time = datetime.strptime(date, "%Y%m%d")
                     # date_to_str = datetime.strftime(date_to_time, '%Y-%m')
                     # date = date_to_time.strftime("%y/%m")
                     # date = date[-4:]
@@ -153,7 +152,7 @@ class KiwoomData(observer.Subject):
                 low = self.kiwoom.dynamicCall(
                     "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, i, "저가")
                 calculator_list['index'].append(i)
-                calculator_list['date'].append(date)
+                calculator_list['date'].append(date_to_time)
                 calculator_list['open'].append(int(open))
                 calculator_list['high'].append(int(high))
                 calculator_list['low'].append(int(low))
