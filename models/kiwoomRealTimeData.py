@@ -55,12 +55,17 @@ class KiwoomRealTimeData(observer.Subject):
         # for idx, row in self.balanceDf.iterrows():
         #     if row['종목코드'] == self.code:
         #         self.dataRows = row
+        self.currentProfitRate = 0
+        self.buyTotalMoney = 0
+        self.canSellVolume = 0
         self.dataRows = self.balanceDf[self.balanceDf['종목코드'] == self.code]
-        self.currentProfitRate = float(self.dataRows['수익율(%)'][0])
-        self.buyTotalMoney = int(self.dataRows['매입금액'][0])
-        self.canSellVolume = int(self.dataRows['매매가능수량'][0])
-        print("평가잔고 정보 가쟈오기" + "\n" + str(self.currentProfitRate) + "\n" + str(self.buyTotalMoney) + "\n" + str(
-            self.canSellVolume))
+        if not self.dataRows.empty:
+            print(str(self.dataRows))
+            self.currentProfitRate = float(self.dataRows['수익율(%)'][0])
+            self.buyTotalMoney = int(self.dataRows['매입금액'][0])
+            self.canSellVolume = int(self.dataRows['매매가능수량'][0])
+            print("평가잔고 정보 가쟈오기" + "\n" + str(self.currentProfitRate) + "\n" + str(self.buyTotalMoney) + "\n" + str(
+                self.canSellVolume))
 
     def run(self):
         # 주식체결 (실시간)

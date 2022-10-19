@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from PyQt5 import QtGui
+from PyQt5 import QtCore
 import pandas as pd
 import interface.conditionRegistration as ConditionRegistration
 import interface.codeSearch as codeSearch
@@ -15,7 +15,29 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         self.bt_searchCode.clicked.connect(self.clickSearch)
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
-        self.et_code.setInputMask("000000")
+        #정규식 예외처리
+        regexCode = QtCore.QRegExp("[0-9_]+")
+        validatorCode = QtGui.QRegExpValidator(regexCode)
+        self.et_code.setValidator(validatorCode)
+
+        # regexProfit = QtCore.QRegExp("[0-9_]+")
+        # validatorProfit = QtGui.QRegExpValidator(regexProfit)
+        # self.et_profitRate.setValidator(validatorProfit)
+        # self.et_profitRateVolume.setValidator(validatorProfit)
+        # self.et_maxProfitRate.setValidator(validatorProfit)
+        self.et_profitRate.setPrefix('+ ')
+        self.et_profitRateVolume.setPrefix('+ ')
+        self.et_maxProfitRate.setPrefix('+ ')
+
+        # regexLoss = QtCore.QRegExp("[0-9_]+")
+        # validatorProfit = QtGui.QRegExpValidator(regexProfit)
+        # self.et_lossRate.setValidator(validatorCode)
+        # self.et_lossRateVolume.setValidator(validatorCode)
+        # self.et_maxLossRate.setValidator(validatorCode)
+        self.et_lossRate.setPrefix('- ')
+        self.et_lossRateVolume.setPrefix('- ')
+        self.et_maxLossRate.setPrefix('- ')
+
         #range validation넣기
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(lambda: self.saveCondition(dataManager))
         self.registerConditionDialog.show()
@@ -24,16 +46,18 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         id = self.currentConditionLength+1
         stockCode = self.et_code.text()
         stockName = self.tv_codeName.text()
-        buyPrice = self.et_buyPrice.text()
-        totalBuyAmount = self.et_totalBuyAmout.text()
+        buyPrice = self.et_buyPrice.value()
+        totalBuyAmount = self.et_totalBuyAmout.value()
         buyStartTime = self.et_buyStartTime.dateTime().toString("HH:mm")
         buyEndTime = self.et_buyEndTime.dateTime().toString("HH:mm")
-        profitRate = self.et_profitRate.text()
-        profitRateVolume = self.et_profitRateVolume.text()
-        maxProfitRate = self.et_maxProfitRate.text()
-        lossRate = self.et_lossRate.text()
-        lossRateVolume = self.et_lossRateVolume.text()
-        maxLossRate = self.et_maxLossRate.text()
+        profitRate = self.et_profitRate.value()
+        profitRateVolume = self.et_profitRateVolume.value()
+        maxProfitRate = self.et_maxProfitRate.value()
+        #손실은 음수로 저장
+        lossRate = (self.et_lossRate.value())* -1
+        lossRateVolume = (self.et_lossRateVolume.value())
+        maxLossRate = (self.et_maxLossRate.value())* -1
+
         arr = [id,str(stockCode), stockName, buyPrice,totalBuyAmount,
                            buyStartTime,buyEndTime,profitRate,profitRateVolume,maxProfitRate,
                            lossRate,lossRateVolume,maxLossRate]

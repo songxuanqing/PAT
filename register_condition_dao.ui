@@ -235,7 +235,7 @@
        <string>~</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="et_buyPrice">
+     <widget class="QSpinBox" name="et_buyPrice">
       <property name="geometry">
        <rect>
         <x>150</x>
@@ -244,15 +244,24 @@
         <height>25</height>
        </rect>
       </property>
+      <property name="maximum">
+       <number>1000000000</number>
+      </property>
      </widget>
-     <widget class="QLineEdit" name="et_totalBuyAmout">
+     <widget class="QSpinBox" name="et_totalBuyAmout">
       <property name="geometry">
        <rect>
         <x>150</x>
-        <y>53</y>
+        <y>54</y>
         <width>211</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="maximum">
+       <number>1000000000</number>
+      </property>
+      <property name="singleStep">
+       <number>1</number>
       </property>
      </widget>
     </widget>
@@ -359,34 +368,40 @@
        <string>(%)</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="et_lossRate">
+     <widget class="QDoubleSpinBox" name="et_lossRate">
       <property name="geometry">
        <rect>
         <x>150</x>
-        <y>26</y>
+        <y>24</y>
         <width>211</width>
         <height>25</height>
        </rect>
       </property>
      </widget>
-     <widget class="QLineEdit" name="et_lossRateVolume">
+     <widget class="QDoubleSpinBox" name="et_maxLossRate">
       <property name="geometry">
        <rect>
         <x>150</x>
-        <y>57</y>
+        <y>85</y>
         <width>211</width>
         <height>25</height>
        </rect>
       </property>
      </widget>
-     <widget class="QLineEdit" name="et_maxLossRate">
+     <widget class="QSpinBox" name="et_lossRateVolume">
       <property name="geometry">
        <rect>
         <x>150</x>
-        <y>86</y>
+        <y>55</y>
         <width>211</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="maximum">
+       <number>100</number>
+      </property>
+      <property name="singleStep">
+       <number>10</number>
       </property>
      </widget>
     </widget>
@@ -480,27 +495,17 @@
        <string>(%)</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="et_profitRate">
+     <widget class="QDoubleSpinBox" name="et_profitRate">
       <property name="geometry">
        <rect>
         <x>150</x>
-        <y>29</y>
+        <y>27</y>
         <width>211</width>
         <height>25</height>
        </rect>
       </property>
      </widget>
-     <widget class="QLineEdit" name="et_profitRateVolume">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>58</y>
-        <width>211</width>
-        <height>25</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="et_maxProfitRate">
+     <widget class="QDoubleSpinBox" name="et_maxProfitRate">
       <property name="geometry">
        <rect>
         <x>150</x>
@@ -508,6 +513,22 @@
         <width>211</width>
         <height>25</height>
        </rect>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="et_profitRateVolume">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>57</y>
+        <width>211</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="maximum">
+       <number>100</number>
+      </property>
+      <property name="singleStep">
+       <number>10</number>
       </property>
      </widget>
     </widget>
