@@ -19,16 +19,18 @@ class KiwoomRealTimeData(observer.Subject):
         self.buyStartTime = str(condition['시작시간'])
         self.buyEndTime = str(condition['종료시간'])
         self.profitRate = float(condition['부분익절율'])
-        self.profitSellVolume = int(condition['부분익절수량'])
+        self.profitSellVolume = int(condition['부분익절수량'])*0.01
         self.maxProfitRate = float(condition['최대익절율'])
         self.lossRate = float(condition['부분손절율'])
-        self.lossSellVolume = int(condition['부분손절수량'])
+        self.lossSellVolume = int(condition['부분손절수량'])*0.01
         self.maxLossRate = float(condition['최대손절율'])
 
         print("생성할때는 제대로 되나?11111111")
         self.accountData = AccountData.AccountData(kiwoom)
         # 평가잔고 정보 가져오기
         self.updateAccountDate()
+        self.isBuyOrdered = False
+        self.isSellOrdered = False
 
     def register_observer(self, observer):
         if observer in self._observer_list:
@@ -61,9 +63,9 @@ class KiwoomRealTimeData(observer.Subject):
         self.dataRows = self.balanceDf[self.balanceDf['종목코드'] == self.code]
         if not self.dataRows.empty:
             print(str(self.dataRows))
-            self.currentProfitRate = float(self.dataRows['수익율(%)'][0])
-            self.buyTotalMoney = int(self.dataRows['매입금액'][0])
-            self.canSellVolume = int(self.dataRows['매매가능수량'][0])
+            self.currentProfitRate = float(self.dataRows['수익율(%)'])
+            self.buyTotalMoney = int(self.dataRows['매입금액'])
+            self.canSellVolume = int(self.dataRows['매매가능수량'])
             print("평가잔고 정보 가쟈오기" + "\n" + str(self.currentProfitRate) + "\n" + str(self.buyTotalMoney) + "\n" + str(
                 self.canSellVolume))
 
@@ -96,7 +98,7 @@ class KiwoomRealTimeData(observer.Subject):
             currentPrice = self.GetCommRealData(code, 10)
             currentPrice = abs(int(currentPrice))          # +100, -100
             time = self.GetCommRealData(code, 20)
-            print("currentPrice"+str(currentPrice))
+            print("currentPrice"+str(currentPrice)+"code"+self.code)
             # 시장가
             # marketPrice = self.GetCommRealData(code, 16)
             # marketPrice= abs(int(marketPrice))          # +100, -100
@@ -105,34 +107,41 @@ class KiwoomRealTimeData(observer.Subject):
             endTime = datetime.datetime.strptime(self.buyEndTime, '%H:%M')
             now = datetime.datetime.now()
 
-            #매수로직
-            #1. 현재시간이 시작과 종료시간 사이인지
-            #2. 총보유금액이 총금액 조건 미만인지
-            #3. 현재가격이 목표가(매수가)보다 크거나 같은지.
-            #4. 목표가로 구매하는 주문 생성
-            if (startTime.time()<now.time()) and (now.time()<endTime.time()):
-                if (self.totalBuyAmount >= self.buyTotalMoney):
-                   if currentPrice >= self.buyPrice:
-                       print("create buy order")
-                       #최대 구매할수 있는 금액에서 현재보유하고 있는량을 제외하고 남은 금액을 현재가로 나눈만큼 구매
-                       print(str(self.totalBuyAmount))
-                       print(str(self.buyTotalMoney))
-                       print(str(currentPrice))
-                       print(str(int((self.totalBuyAmount - self.buyTotalMoney)/currentPrice)))
-                       buyVolume = int((self.totalBuyAmount - self.buyTotalMoney)/currentPrice)
-                       buy_order = Order.Order("현재가매수", "0101", self.accountData.getAccountInfo(), 1, code, self.codeName,buyVolume,
-                                                self.buyPrice, "00", "",self.profitRate,self.lossRate,self.currentProfitRate,now)
-                       # 주문생성시만 어카운트 정보 업데이트
-                       self.notify_observers(buy_order)
-                       # self.updateAccountDate()
 
+            if not self.isBuyOrdered:
+                # 매수로직
+                # 1. 현재시간이 시작과 종료시간 사이인지
+                # 2. 총보유금액이 총금액 조건 미만인지
+                # 3. 현재가격이 목표가(매수가)보다 크거나 같은지.
+                # 4. 목표가로 구매하는 주문 생성
+                if (startTime.time() < now.time()) and (now.time() < endTime.time()):
+                    if (self.totalBuyAmount >= self.buyTotalMoney):
+                        if currentPrice >= self.buyPrice:
+                            # 최대 구매할수 있는 금액에서 현재보유하고 있는량을 제외하고 남은 금액을 현재가로 나눈만큼 구매
+                            buyVolume = int((self.totalBuyAmount - self.buyTotalMoney) / currentPrice)
+                            if buyVolume > 1:
+                                print("create buy order")
+                                print(str(self.totalBuyAmount))
+                                print(str(self.buyTotalMoney))
+                                print(str(currentPrice))
+                                print(str(int((self.totalBuyAmount - self.buyTotalMoney) / currentPrice)))
+                                buy_order = Order.Order("현재가매수", "0101", self.accountData.getAccountInfo(), 1, code,
+                                                        self.codeName, buyVolume,
+                                                        currentPrice, "00", "", self.profitRate, self.lossRate,
+                                                        self.currentProfitRate, now)
+                                # 주문생성시만 어카운트 정보 업데이트
+                                self.notify_observers(buy_order)
+                                # self.updateAccountDate()
+                                self.isBuyOrdered = True
+                                self.isSellOrdered = False
 
-            #매도로직
-            # 1. 수익율이 최대수익율보다 크거나 같으면 거래량은 매매가능수량
-            # 2. 수익율이 최대익절율보다 작고 부분익절율보다 크거나 같으면 거래량은 매매가능수량 * 부분익절량
-            # 3. 수익율이 최대손절율보다 크거나 같고 부분손절율보다 작으면 거래량은 매매가능수량 * 부분손절량
-            # 4. 수익율이 최대손절율보다 작거나 같으면 거래량은 매매가능수량
-            if self.canSellVolume > 0 :
+            if not self.isSellOrdered or (self.canSellVolume > 0):
+                print("able to sell")
+                # 매도로직
+                # 1. 수익율이 최대수익율보다 크거나 같으면 거래량은 매매가능수량
+                # 2. 수익율이 최대익절율보다 작고 부분익절율보다 크거나 같으면 거래량은 매매가능수량 * 부분익절량
+                # 3. 수익율이 최대손절율보다 크거나 같고 부분손절율보다 작으면 거래량은 매매가능수량 * 부분손절량
+                # 4. 수익율이 최대손절율보다 작거나 같으면 거래량은 매매가능수량
                 sellVolume = 0
                 trySell = False
                 if self.currentProfitRate >= self.maxProfitRate:
@@ -148,19 +157,25 @@ class KiwoomRealTimeData(observer.Subject):
                     sellVolume = self.canSellVolume
                     trySell = True
 
-                print("create sell order")
                 if trySell:
-                    sell_order = Order.Order("현재가매도","0102",self.accountData.getAccountInfo(),2,code,self.codeName,sellVolume,currentPrice,"00","",self.profitRate,self.lossRate,self.currentProfitRate,now)
-                    #주문생성시만 어카운트 정보 업데이트
+                    print("create sell order")
+                    print(str(currentPrice))
+                    print(str(sellVolume))
+                    sell_order = Order.Order("현재가매도", "0102", self.accountData.getAccountInfo(), 2, code,
+                                                self.codeName, sellVolume, currentPrice, "00", "", self.profitRate,
+                                                self.lossRate, self.currentProfitRate, now)
+                    # 주문생성시만 어카운트 정보 업데이트
                     self.notify_observers(sell_order)
                     # self.updateAccountDate()
-            #SendOrder(BSTR sRQName, // 사용자 구분명
-            # BSTR sScreenNo, // 화면번호
-            # BSTR sAccNo,  // 계좌번호 10자리
-            # LONG nOrderType,  // 주문유형 1:신규매수, 2:신규매도 3:매수취소, 4:매도취소, 5:매수정정, 6:매도정정
-            # BSTR sCode, // 종목코드 (6자리)
-            # LONG nQty,  // 주문수량
-            # LONG nPrice, // 주문가격
-            # BSTR sHogaGb,   // 거래구분(혹은 호가구분)은 아래 참고
-            # BSTR sOrgOrderNo  // 원주문번호. 신규주문에는 공백 입력, 정정/취소시 입력합니다.
-            # )
+                    self.isSellOrdered = True
+                    self.isBuyOrdered = False
+                # SendOrder(BSTR sRQName, // 사용자 구분명
+                # BSTR sScreenNo, // 화면번호
+                # BSTR sAccNo,  // 계좌번호 10자리
+                # LONG nOrderType,  // 주문유형 1:신규매수, 2:신규매도 3:매수취소, 4:매도취소, 5:매수정정, 6:매도정정
+                # BSTR sCode, // 종목코드 (6자리)
+                # LONG nQty,  // 주문수량
+                # LONG nPrice, // 주문가격
+                # BSTR sHogaGb,   // 거래구분(혹은 호가구분)은 아래 참고
+                # BSTR sOrgOrderNo  // 원주문번호. 신규주문에는 공백 입력, 정정/취소시 입력합니다.
+                # )

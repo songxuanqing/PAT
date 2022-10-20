@@ -17,6 +17,7 @@ import plotly.express as px
 from PyQt5.QAxContainer import *
 from PyQt5 import QtWidgets, uic, QtWebEngineWidgets
 from PyQt5.QtGui import *
+from PyQt5.QtCore import Qt
 import models.accountData as AccountData
 import models.favoriteList as FavoriteList
 import models.stockList as StockList
@@ -98,7 +99,9 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         #자동매매 조건 관리탭 이벤트
         self.bt_addCondition.clicked.connect(self.openRegisterCondition)
         self.bt_stopAll.clicked.connect(self.stopAllAutoTrading)
-
+        self.bt_deleteCondition.clicked.connect(self.deleteConditions)
+        self.tbl_manageConditions.cellChanged.connect(self.conditionCheckboxChanged)
+        self.deletingConditionList = []
 
         #실시간데이터 로그
         # 주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
@@ -155,16 +158,27 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
     #조건 테이블 표시
     def displayConditionTable(self):
         nRows = len(self.monitoredConditionList.index)
-        nColumns = len(self.monitoredConditionList.columns)
+        nColumns = len(self.monitoredConditionList.columns)+1 #체크박스 추가 위해 컬럼 수 하나 추가
         self.tbl_manageConditions.setRowCount(nRows)
         self.tbl_manageConditions.setColumnCount(nColumns)
-
         for i in range(self.tbl_manageConditions.rowCount()):
             for j in range(self.tbl_manageConditions.columnCount()):
-                x = self.monitoredConditionList.iloc[i, j]
-                self.tbl_manageConditions.setItem(i, j, QtWidgets.QTableWidgetItem(str(x)))
-
-        self.tbl_manageConditions.setHorizontalHeaderLabels(self.monitoredConditionList.columns)
+                if j == 0:
+                    chkBoxItem = QtWidgets.QTableWidgetItem()
+                    chkBoxItem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    chkBoxItem.setCheckState(Qt.Unchecked)
+                    self.tbl_manageConditions.setItem(i, j, chkBoxItem)
+                    # x = self.monitoredConditionList.iloc[i, j]
+                    # chkBoxItem = QtWidgets.QTableWidgetItem(x)
+                    # chkBoxItem.setText(str(x))
+                    # chkBoxItem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    # chkBoxItem.setCheckState(Qt.Unchecked)
+                    # self.tbl_manageConditions.setItem(i, j, chkBoxItem)
+                else:
+                    x = self.monitoredConditionList.iloc[i, (j-1)] #체크박스 하나 추가되었으므로, 데이터는 컬럼 index 전부터 가져오기
+                    self.tbl_manageConditions.setItem(i, j, QtWidgets.QTableWidgetItem(str(x)))
+        self.tbl_manageConditions.setHorizontalHeaderLabels(["",'ID', '종목코드', '종목명', '매수가', '총금액', '시작시간', '종료시간', '부분익절율', '부분익절수량',
+       '최대익절율', '부분손절율', '부분손절수량', '최대손절율'])
         self.tbl_manageConditions.resizeColumnsToContents()
         self.tbl_manageConditions.resizeRowsToContents()
 
@@ -175,7 +189,6 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.tbl_totalBalance.setRowCount(nRows)
         self.tbl_totalBalance.setColumnCount(nColumns)
         # self.setItemDelegate(FloatDelegate())
-
         for i in range(self.tbl_totalBalance.rowCount()):
             for j in range(self.tbl_totalBalance.columnCount()):
                 x = self.accountBalanceInfo.iloc[i, j]
@@ -498,6 +511,20 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         currentConditionLength = len(self.monitoredConditionList)
         regCondi = registerCondition.RegisterCondition(self.dataManager,currentConditionLength,self.stockList)
         self.register_subject_condition(regCondi)
+
+    def conditionCheckboxChanged(self, row, column):
+        item = self.tbl_manageConditions.item(row, column)
+        id = self.tbl_manageConditions.item(row, 1)
+        currentState = item.checkState()
+        if currentState == Qt.Checked:
+            print("checked")
+            self.deletingConditionList.append(id)
+        else:
+            print("unchecked")
+            self.deletingConditionList.remove(id)
+
+    def deleteConditions(self):
+        print("delete")
 
     def createConditionFile(self):
         conditionHeaderList = ['ID','종목코드','종목명','매수가','총금액','시작시간','종료시간',

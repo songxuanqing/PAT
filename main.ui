@@ -84,20 +84,20 @@
      <widget class="QPushButton" name="bt_addCondition">
       <property name="geometry">
        <rect>
-        <x>860</x>
+        <x>750</x>
         <y>150</y>
         <width>112</width>
         <height>34</height>
        </rect>
       </property>
       <property name="text">
-       <string>조건 추가</string>
+       <string>추가</string>
       </property>
      </widget>
      <widget class="QPushButton" name="bt_stopAll">
       <property name="geometry">
        <rect>
-        <x>980</x>
+        <x>10</x>
         <y>150</y>
         <width>112</width>
         <height>34</height>
@@ -105,6 +105,32 @@
       </property>
       <property name="text">
        <string>전체 중지</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_deleteCondition">
+      <property name="geometry">
+       <rect>
+        <x>990</x>
+        <y>150</y>
+        <width>112</width>
+        <height>34</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>삭제</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_editCondition">
+      <property name="geometry">
+       <rect>
+        <x>870</x>
+        <y>150</y>
+        <width>112</width>
+        <height>34</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>수정</string>
       </property>
      </widget>
     </widget>

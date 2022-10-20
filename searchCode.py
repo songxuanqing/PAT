@@ -35,11 +35,16 @@ class SearchCode(QtWidgets.QDialog, codeSearch.Subject):
         keyword = self.et_searchCode.text()
         self.tv_searchResult.clear()
         searchedResult = []
-        #search result
-        for i in self.stockList:
-            if keyword in i:
+        if keyword == "":
+            for i in self.stockList:
                 searchedResult.append(i)
                 self.tv_searchResult.addItem(i)
+        #search result
+        elif keyword != "":
+            for i in self.stockList:
+                if keyword in i:
+                    searchedResult.append(i)
+                    self.tv_searchResult.addItem(i)
 
     def register_observer_searchCode(self, observer):
         self.observer = observer
