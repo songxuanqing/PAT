@@ -26,7 +26,6 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         # self.et_profitRateVolume.setValidator(validatorProfit)
         # self.et_maxProfitRate.setValidator(validatorProfit)
         self.et_profitRate.setPrefix('+ ')
-        self.et_profitRateVolume.setPrefix('+ ')
         self.et_maxProfitRate.setPrefix('+ ')
 
         # regexLoss = QtCore.QRegExp("[0-9_]+")
@@ -35,7 +34,6 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         # self.et_lossRateVolume.setValidator(validatorCode)
         # self.et_maxLossRate.setValidator(validatorCode)
         self.et_lossRate.setPrefix('- ')
-        self.et_lossRateVolume.setPrefix('- ')
         self.et_maxLossRate.setPrefix('- ')
 
         #range validation넣기

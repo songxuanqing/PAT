@@ -34,13 +34,16 @@ class OrderQueue(observer.Subject):
 
     def run(self):
         while True:
-            sleep(1)
+            sleep(2)
             if self.list:
                 order = self.list.pop()
-                self.kiwoom.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                returnCode = self.kiwoom.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
                                      [order.사용자구분명, order.화면번호, order.계좌번호, order.주문유형,
                                       order.종목코드, order.주문수량, order.주문가격, order.거래구분, order.원주문번호])
-                self.notify_observers(order)
+                if returnCode != 0:
+                    print("sendOrder : " + str(returnCode))
+                else:
+                    self.notify_observers(order)
 
 
 

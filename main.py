@@ -97,6 +97,7 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.bx_subIndexListArea.addWidget(self.cb_subIndexList)
         #자동매매 조건 관리탭 이벤트
         self.bt_addCondition.clicked.connect(self.openRegisterCondition)
+        self.bt_stopAll.clicked.connect(self.stopAllAutoTrading)
 
 
         #실시간데이터 로그
@@ -507,6 +508,10 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         df = self.dataManager.readCSVFile("pats_condition.csv")
         print(str(df))
         return df
+
+    def stopAllAutoTrading(self):
+        self.autoTrading.DisConnectRealData("5000")
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

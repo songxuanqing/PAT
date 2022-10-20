@@ -84,7 +84,7 @@
      <widget class="QPushButton" name="bt_addCondition">
       <property name="geometry">
        <rect>
-        <x>980</x>
+        <x>860</x>
         <y>150</y>
         <width>112</width>
         <height>34</height>
@@ -92,6 +92,19 @@
       </property>
       <property name="text">
        <string>조건 추가</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bt_stopAll">
+      <property name="geometry">
+       <rect>
+        <x>980</x>
+        <y>150</y>
+        <width>112</width>
+        <height>34</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>전체 중지</string>
       </property>
      </widget>
     </widget>

@@ -54,10 +54,10 @@ class CheckableComboBox(QComboBox,observer.Subject):
         for observer in self._observer_list:
             observer.update_subIndex()
 
-    def resizeEvent(self, event):
-        # Recompute text to elide as needed
-        self.updateText()
-        super().resizeEvent(event)
+    # def resizeEvent(self, event):
+    #     # Recompute text to elide as needed
+    #     self.updateText()
+    #     super().resizeEvent(event)
 
     def eventFilter(self, object, event):
         if object == self.lineEdit():

@@ -27,7 +27,7 @@ class AccountData():
         self.screen_account_list = ["1000","1001","1002","1003","1004","1005","1006","1007","1008","1009"]
         self.call_count = 0
         #이벤트 TR슬롯 등록록
-        self.event_collection()
+        self.kiwoom.OnReceiveTrData.connect(self.tr_slot)  # 트랜잭션 요청 관련 이벤트
         self.get_account_info()  # 계좌 번호만 얻어오기
         # self.get_account_evaluation_balance()  # 계좌평가잔고내역 얻어오기
 
@@ -38,9 +38,6 @@ class AccountData():
     def getBalanceInfo(self):
         print("getBalance")
         return self.df
-
-    def event_collection(self):
-        self.kiwoom.OnReceiveTrData.connect(self.tr_slot)  # 트랜잭션 요청 관련 이벤트
 
     #계좌정보 얻어오기
     def get_account_info(self):

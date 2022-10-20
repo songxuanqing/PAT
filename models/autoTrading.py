@@ -33,9 +33,10 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         if source == "kiwoomRealTimeData":
             self.orderQueue.add(order)
         elif source == "orderQueue":
-            msg = "종목명"+order.종목명+"\n"+"주문유형:"+order.주문유형+"\n"\
-                  +"주문가격:"+order.주문가격+"\n"+"주문수량:"+order.주문수량+"\n"\
-                  +"현재수익율:"+order.현재수익율+"\n"+"목표익절율:"+order.목표익절율+"\n"+"목표손절율:"+order.목표손절율
+            msg = "종목명"+str(order.종목명)+"\n"+"주문유형:"+str(order.주문유형)+"\n"\
+                  +"주문가격:"+str(order.주문가격)+"\n"+"주문수량:"+str(order.주문수량)+"\n"\
+                  +"현재수익율:"+str(order.현재수익율)+"\n"+"목표익절율:"+str(order.목표익절율)+"\n"\
+                  +"목표손절율:"+str(order.목표손절율)
             self.notify_observers_order(msg)
 
     def register_subject(self, subject):
@@ -43,6 +44,10 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         self.subject.register_observer(self)
 
     def addThread(self, kiwoomRealTimeData):
+        # self.worker = Worker()  # 백그라운드에서 돌아갈 인스턴스 소환
+        # self.worker_thread = QThread()  # 따로 돌아갈 thread를 하나 생성
+        # self.worker.moveToThread(self.worker_thread)  # worker를 만들어둔 쓰레드에 넣어줍니다
+        # self.worker_thread.start()  # 쓰레드를 실행합니다.
         th = Thread(target=kiwoomRealTimeData.run(), args=())
         self.threadList.append(th)
         th.daemon = True
@@ -69,3 +74,8 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
     def notify_observers_order(self, order):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
         for observer in self._observer_list:
             observer.update_order(order)
+
+    def DisConnectRealData(self, screen_no):
+        print("DisConnectRealData")
+        self.kiwoom.dynamicCall("DisConnectRealData(QString)", screen_no)
+
