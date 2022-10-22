@@ -33,6 +33,7 @@ import interface.observerOrder as observerOrder
 import interface.observerSubIndexList as observerSubIndexList
 import controls.checkableComboBox as CheckableComboBox
 import registerCondition
+import editCondition
 
 def OnEventConnect(err_code):
     if err_code == 0:  # err_code가 0이면 로그인 성공 그외 실패
@@ -46,7 +47,6 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         super().__init__()  # 부모클래스 QMainWindow 클래스의 초기화 함수(생성자)를 호출
         self.kiwoom = kiwoom
         self.is_completed = False
-        arr = []
 
         #계정정보 가져오기
         self.accountData = AccountData.AccountData(kiwoom)
@@ -57,13 +57,14 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         #모니터링할 조건식 리스트 가져오기
         self.dataManager = Database.Database()
         self.createConditionFile()
+        self.createFavoriteFile()
         self.monitoredConditionList = self.getSavedConditionList()
-        self.autoTrading = AutoTrading.AutoTrading(kiwoom,self.monitoredConditionList,self.accountData)
+        self.autoTrading = AutoTrading.AutoTrading(kiwoom,self.monitoredConditionList)
 
 
         # 즐겨찾기 객체생성
-        self.favoriteList = FavoriteList.FavoriteList()
-        self.favoriteList.setList(arr)
+        self.favoriteList = self.getSavedFavoriteList()
+
         self.stocklist = StockList.StockList(kiwoom)
         self.stockList = self.stocklist.getList()
         self.candlelist = CandleList.CandleList()
@@ -96,12 +97,6 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         #보조지표 목록 준비
         self.cb_subIndexList.addItems(self.subIndexList)
         self.bx_subIndexListArea.addWidget(self.cb_subIndexList)
-        #자동매매 조건 관리탭 이벤트
-        self.bt_addCondition.clicked.connect(self.openRegisterCondition)
-        self.bt_stopAll.clicked.connect(self.stopAllAutoTrading)
-        self.bt_deleteCondition.clicked.connect(self.deleteConditions)
-        self.tbl_manageConditions.cellChanged.connect(self.conditionCheckboxChanged)
-        self.deletingConditionList = []
 
         #실시간데이터 로그
         # 주식체결 이벤트 발생시 tv_atLog에 appendPlainText(data)
@@ -113,6 +108,16 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.displayChart()
         #조건테이블 나타내기
         self.displayConditionTable()
+        # 자동매매 조건 관리탭 이벤트
+        self.bt_addCondition.clicked.connect(self.openRegisterCondition)
+        self.bt_stopAll.clicked.connect(self.stopAllAutoTrading)
+        self.bt_deleteCondition.clicked.connect(self.deleteConditions)
+        self.bt_editCondition.clicked.connect(self.editCondition)
+        self.checkedConditionList = []
+        self.tbl_manageConditions.cellChanged.connect(self.conditionCheckboxChanged)
+        #즐겨찾기 준비
+        self.displayFavoriteList()
+        self.bt_favorite.clicked.connect(self.favoriteButton)
 
         self.ui.show()
 
@@ -144,16 +149,25 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.subject_subIndex = subject_subIndex
         self.subject_subIndex.register_observer_subIndex(self)
 
-    def update_condition(self, condition):
+    def update_condition(self, source,condition):
         print("registered")
         self.monitoredConditionList = self.getSavedConditionList()
         self.displayConditionTable()
-        self.autoTrading.addCondition(condition)
+        #신규 등록일 경우 조건으로 Thread 추가하고, 조건 수정일 경우 모든 쓰레드를 중지했다가 다시 들록한다.
+        if source == "register":
+            self.autoTrading.addCondition(condition)
+        elif source == "edit":
+            self.autoTrading.resetConditions(self.monitoredConditionList)
 
     def register_subject_condition(self,subject):
         self.subject_condition = subject
         self.subject_condition.register_observer_condition(self)
 
+
+    def displayFavoriteList(self):
+        self.tv_favorite.clear()
+        for i in self.favoriteList:
+            self.tv_favorite.addItem(i)
 
     #조건 테이블 표시
     def displayConditionTable(self):
@@ -435,64 +449,6 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         #         tickformat="%m\n%Y")
         self.browser.setHtml(fig.to_html(include_plotlyjs='cdn'))
 
-        # ----------------------------------------------------------------------------------#
-        # 그래프 구역 나누기
-        # fig = plt.figure(figsize=(11, 8))
-        # fig.set_facecolor('w')
-        # self.canvas = FigureCanvas(fig)
-        # self.toolbar = NavigationToolbar(self.canvas, self)
-        # self.bx_chartArea.addWidget(self.canvas)
-        # self.bx_chartArea.addWidget(self.toolbar)
-        #
-        # gs = gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
-        # axs = []
-        # axs.append(plt.subplot(gs[0]))  # 위 차트 = 캔들
-        # axs.append(plt.subplot(gs[1], sharex=axs[0]))  # 아래 차트 = RSI 등 백분율
-        # axs.append(plt.subplot(gs[2], sharex=axs[0]))  # 아래 차트 = 거래량
-        # for ax in axs:
-        #     ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=range(1, 13)))
-        #     ax.xaxis.set_minor_locator(mdates.MonthLocator())
-        # # ax. 캔들 차트
-        # ax = axs[0]
-        # x = np.arange(len(df.index))
-        # ohlc = df[['open', 'high', 'low', 'close']].astype(int).values
-        # dohlc = np.hstack((np.reshape(x, (-1, 1)), ohlc))
-        # candlestick_ohlc(ax, dohlc, width=0.5, colorup='r', colordown='b')
-        #
-        # ax1 = axs[1]
-        #
-        # #if문으로 보조지표 선택시 차트 그리기
-        # if "일목균형표" in self.selectedSubIndices :
-        #     # ax. 일목균형차트
-        #     ax.plot(df.span_a, label='span_a', linestyle='solid', color='pink')
-        #     ax.plot(df.span_b, label='span_b', linestyle='solid', color='lightsteelblue')
-        #     ax.plot(df.base_line, label='base_line', linestyle='solid', color='green', linewidth=2)
-        #     ax.plot(df.conv_line, label='conv_line', linestyle='solid', color='darkorange')
-        #     ax.fill_between(df.index, df.span_a, df.span_b, alpha=0.3)
-        # if "RSI" in self.selectedSubIndices :
-        #     ax1.plot(df.rsi, label="rsi", linestyle="solid",color="red")
-        #
-        # ax.grid(True, axis='y', color='grey', alpha=0.5, linestyle='--')
-        # ax.legend()
-        #
-        #
-        #
-        # # ax3. 거래량 차트
-        # ax2 = axs[2]
-        # color_fuc = lambda x: 'r' if x >= 0 else 'b'
-        # color_list = list(df['volume'].diff().fillna(0).apply(color_fuc))
-        # ax2.bar(x, df['volume'], width=0.5,
-        #                 align='center',
-        #                 color=color_list)
-        # # ----------------------------------------------------------------------------------#
-        # # 그래프 title 지정
-        # # X축 티커 숫자 20개로 제한
-        # ax.xaxis.set_major_locator(ticker.MaxNLocator(10))
-        # # X축 라벨 지정
-        # # bottom_axes.set_xlabel('Date', fontsize=15)
-        # ax.legend()
-        # plt.tight_layout()
-
     #콤보박스 변경 이벤트
     def selectStock(self):
         self.selectedStock = self.cb_stockList.currentText()
@@ -508,23 +464,68 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         self.displayChart()
 
     def openRegisterCondition(self):
-        currentConditionLength = len(self.monitoredConditionList)
-        regCondi = registerCondition.RegisterCondition(self.dataManager,currentConditionLength,self.stockList)
+        #만약 현재 조건이 이미 있으면 마지막열 id가져오고, 아니라면 0으로 한다.
+        if len(self.monitoredConditionList)>0:
+            lastConditionId =self.monitoredConditionList['ID'].iloc[-1]
+        else:
+            lastConditionId = 0
+        regCondi = registerCondition.RegisterCondition(self.dataManager,lastConditionId,self.stockList)
         self.register_subject_condition(regCondi)
 
     def conditionCheckboxChanged(self, row, column):
         item = self.tbl_manageConditions.item(row, column)
-        id = self.tbl_manageConditions.item(row, 1)
-        currentState = item.checkState()
-        if currentState == Qt.Checked:
-            print("checked")
-            self.deletingConditionList.append(id)
-        else:
-            print("unchecked")
-            self.deletingConditionList.remove(id)
+        if self.tbl_manageConditions.item(row, 1) != None:
+            id = int(self.tbl_manageConditions.item(row, 1).text())
+            currentState = item.checkState()
+            if currentState == Qt.Checked:
+                print("checked")
+                print("is" + str(id))
+                self.checkedConditionList.append(id)
+            else:
+                if len(self.checkedConditionList) > 0:
+                    print("unchecked")
+                    self.checkedConditionList.remove(id)
 
     def deleteConditions(self):
-        print("delete")
+        if len(self.checkedConditionList) == 0 :
+            choice = QtWidgets.QMessageBox.information(self, '조건 삭제',
+                                                "삭제할 조건을 하나 이상 선택해주세요. ",
+                                                QtWidgets.QMessageBox.Ok)
+            if choice == QtWidgets.QMessageBox.Ok:
+                pass
+        else:
+            for id in self.checkedConditionList:
+                print("is"+str(id))
+                print(str(self.monitoredConditionList['ID']))
+                df = self.monitoredConditionList.loc[self.monitoredConditionList['ID']!=id]
+                print("shape"+str(df))
+            self.dataManager.removeRows("pats_condition.csv",df)
+            self.monitoredConditionList = self.getSavedConditionList()
+            self.displayConditionTable()
+            #모든 Thread를 stop, kiwoon실시간 객체 리스트 비우고, 다시 autoTrading 객체 리셋하기
+            self.autoTrading.resetConditions(self.monitoredConditionList)
+            print("delete")
+
+    def editCondition(self):
+        #self.checkedConditionList 아이템 갯수 확인 1개 아니면 진행하지 않는다. 노티피케이션 보인다.
+        if len(self.checkedConditionList) == 0 :
+            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
+                                                "수정할 조건을 선택해주세요. ",
+                                                QtWidgets.QMessageBox.Ok)
+            if choice == QtWidgets.QMessageBox.Ok:
+                pass
+        elif len(self.checkedConditionList) > 1 :
+            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
+                                                "수정할 조건을 하나만 선택해주세요. ",
+                                                QtWidgets.QMessageBox.Ok)
+            if choice == QtWidgets.QMessageBox.Ok:
+                pass
+        else:
+            id = self.checkedConditionList[0]
+            #체크한 아이디와 동일한 id를 가진 조건을 가져와서(df 시리즈) 수정 페이지로 넘긴다.
+            dataRow = self.monitoredConditionList[self.monitoredConditionList['ID'] == id]
+            editCondi = editCondition.EditCondition(self.dataManager, dataRow, self.monitoredConditionList, self.stockList)
+            self.register_subject_condition(editCondi)
 
     def createConditionFile(self):
         conditionHeaderList = ['ID','종목코드','종목명','매수가','총금액','시작시간','종료시간',
@@ -535,6 +536,33 @@ class MainWindow(QtWidgets.QMainWindow, ConditionRegistration.Observer, observer
         df = self.dataManager.readCSVFile("pats_condition.csv")
         print(str(df))
         return df
+
+    def favoriteButton(self):
+        #만약 현재 선택된 종목이 즐겨찾기에 있을 경우
+        for i in self.favoriteList:
+            if self.selectedStock == i:
+                self.removeFavorite()
+            else :
+                self.addFavorite()
+        self.favoriteList = self.getSavedFavoriteList()
+        self.displayFavoriteList()
+
+    def addFavorite(self):
+        self.dataManager.appendCSVFile("past_favorite.csv",self.favoriteList)
+
+    def removeFavorite(self):
+        df = self.monitoredConditionList.loc[self.favoriteList['즐겨찾기'] != self.selectedStock]
+        self.dataManager.removeRows("pats_condition.csv", df)
+
+    def createFavoriteFile(self):
+        favoriteHeader = ['즐겨찾기']
+        self.dataManager.createCSVFile("past_favorite.csv", favoriteHeader)
+
+    def getSavedFavoriteList(self):
+        df = self.dataManager.readCSVFile("past_favorite.csv")
+        return df
+
+
 
     def stopAllAutoTrading(self):
         self.autoTrading.DisConnectRealData("5000")

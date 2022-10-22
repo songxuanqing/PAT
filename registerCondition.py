@@ -7,10 +7,10 @@ import interface.codeSearch as codeSearch
 import searchCode
 
 class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSearch.Observer):
-    def __init__(self,dataManager,currentConditionLength,stockList):
+    def __init__(self,dataManager,lastCondtiontionId,stockList):
         super().__init__()
         self.stockList = stockList
-        self.currentConditionLength = currentConditionLength
+        self.lastCondtiontionId = lastCondtiontionId
         self.registerConditionDialog = uic.loadUi("register_condition_dao.ui", self)  # ui 파일 불러오기
         self.bt_searchCode.clicked.connect(self.clickSearch)
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
@@ -36,12 +36,11 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         self.et_lossRate.setPrefix('- ')
         self.et_maxLossRate.setPrefix('- ')
 
-        #range validation넣기
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(lambda: self.saveCondition(dataManager))
         self.registerConditionDialog.show()
 
     def saveCondition(self,dataManager):
-        id = self.currentConditionLength+1
+        id = self.lastCondtiontionId+1
         stockCode = self.et_code.text()
         stockName = self.tv_codeName.text()
         buyPrice = self.et_buyPrice.value()
@@ -86,4 +85,4 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         self.observer = observer
 
     def notify_observers_condition(self,condition):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
-        self.observer.update_condition(condition)
+        self.observer.update_condition("register",condition)

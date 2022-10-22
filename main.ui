@@ -164,16 +164,6 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QTableView" name="tbl_favoriteTable">
-    <property name="geometry">
-     <rect>
-      <x>855</x>
-      <y>70</y>
-      <width>261</width>
-      <height>321</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
@@ -218,27 +208,6 @@
       <width>291</width>
       <height>24</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="lb_favoriteStar">
-    <property name="geometry">
-     <rect>
-      <x>310</x>
-      <y>10</y>
-      <width>31</width>
-      <height>18</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>☆</string>
-    </property>
-    <property name="textFormat">
-     <enum>Qt::PlainText</enum>
     </property>
    </widget>
    <widget class="QComboBox" name="cb_candleList">
@@ -344,6 +313,29 @@
       <number>0</number>
      </property>
     </layout>
+   </widget>
+   <widget class="QPushButton" name="bt_favorite">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>2</y>
+      <width>31</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="tv_favorite">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>70</y>
+      <width>251</width>
+      <height>311</height>
+     </rect>
+    </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

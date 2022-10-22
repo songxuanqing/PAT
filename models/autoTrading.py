@@ -8,7 +8,7 @@ import interface.observerOrder as observerOrder
 class AutoTrading(observer.Observer, observerOrder.Subject):
     threadList = []
     kiwoom = None
-    def __init__(self,kiwoom,conditionList,accoutData):
+    def __init__(self,kiwoom,conditionList):
         #accountData는 account Data를 수신하는 py 클래스 객체이다.
         self.orderQueue = OrderQueue.OrderQueue(kiwoom)
         self.register_subject(self.orderQueue)
@@ -58,6 +58,20 @@ class AutoTrading(observer.Observer, observerOrder.Subject):
         kiwoomRealTimeData = KiwoomRealTimeData.KiwoomRealTimeData(self.kiwoom, condition)
         self.addThread(kiwoomRealTimeData)
         self._subject_list.append(kiwoomRealTimeData)
+
+    def removeCondition(self):
+        #모든 쓰레드를 종료하고, 쓰레드 리스트와 모니터링 객체 리스트 초기화
+        for th in self.threadList:
+            th.join()
+        self.threadList = []
+        self._subject_list = []
+
+    def resetConditions(self,conditionList):
+        self.removeCondition()
+        for idx, row in conditionList.iterrows():
+            self.addCondition(row)
+        for i in self._subject_list:
+            self.register_subject(i)
 
     def register_observer_order(self, observer):
         if observer in self._observer_list:
