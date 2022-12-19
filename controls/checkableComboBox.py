@@ -13,8 +13,8 @@ class CheckableComboBox(QComboBox,observer.Subject):
             size.setHeight(20)
             return size
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, subIndexList,selectedSubIndices):
+        super().__init__()
         self._observer_list = []
         # Make the combo editable to set a custom text, but readonly
         self.setEditable(True)
@@ -36,6 +36,18 @@ class CheckableComboBox(QComboBox,observer.Subject):
 
         # Prevent popup from closing when clicking on an item
         self.view().viewport().installEventFilter(self)
+        self.addItems(subIndexList)
+        if selectedSubIndices != []:
+            texts = []
+            for i in selectedSubIndices:
+                texts.append(i)
+                for j in range(self.model().rowCount()):
+                    if self.model().item(j).text() == i:
+                        self.model().item(j).setCheckState(Qt.Checked)
+            text = ", ".join(texts)
+            # metrics = QFontMetrics(self.lineEdit().font())
+            # elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
+            self.lineEdit().setText(text)
 
     def register_observer_subIndex(self, observer):
         if observer in self._observer_list:
@@ -50,7 +62,6 @@ class CheckableComboBox(QComboBox,observer.Subject):
         return "observer does not exist."
 
     def notify_observers_subIndex(self):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
-        print("checkable combobox notify observer")
         for observer in self._observer_list:
             observer.update_subIndex()
 
@@ -106,9 +117,9 @@ class CheckableComboBox(QComboBox,observer.Subject):
         text = ", ".join(texts)
 
         # Compute elided text (with "...")
-        metrics = QFontMetrics(self.lineEdit().font())
-        elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
-        self.lineEdit().setText(elidedText)
+        # metrics = QFontMetrics(self.lineEdit().font())
+        # elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
+        self.lineEdit().setText(text)
         self.notify_observers_subIndex()
 
     def addItem(self, text, data=None):
@@ -134,7 +145,6 @@ class CheckableComboBox(QComboBox,observer.Subject):
         # Return the list of selected items data
         res = []
         for i in range(self.model().rowCount()):
-            print(self.model().item(i).data())
             if self.model().item(i).checkState() == Qt.Checked:
                 res.append(self.model().item(i).data())
         return res

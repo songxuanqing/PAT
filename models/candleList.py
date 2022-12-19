@@ -8,7 +8,6 @@ class CandleList():
         self.setList()
 
     def setList(self):
-        self.arr.append("1 일")
         self.arr.append("1 분")
         self.arr.append("3 분")
         self.arr.append("5 분")

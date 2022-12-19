@@ -4,12 +4,10 @@ import pandas as pd
 
 class Database():
     def __init__(self):
-        print("create database")
+        print("")
 
     def createCSVFile(self,filename,columnArray):
-        print(""+os.path.abspath(os.getcwd()))
         if os.path.exists(os.path.abspath(os.getcwd())+"\\"+filename)==False:
-            print("CreateCSVFile")
             f = open(filename,'a', newline='')
             wr = csv.writer(f)
             wr.writerow(columnArray)
@@ -27,7 +25,7 @@ class Database():
         # fileDf = pd.read_csv(
         #     filename, encoding='cp949',
         #     converters={
-        #         "종목코드": str,  # Ensure serialno is read as string, maintaining leading 0's
+        #         "코드": str,  # Ensure serialno is read as string, maintaining leading 0's
         #     })
         # fileDf[key] = df
         # lines = []
@@ -44,7 +42,7 @@ class Database():
         df = pd.read_csv(
             filename,encoding='cp949',
             converters={
-                "종목코드": str,  # Ensure serialno is read as string, maintaining leading 0's
+                "코드": str,  # Ensure serialno is read as string, maintaining leading 0's
             })
         return df
         # f = open(filename, 'r', encoding='utf-8')

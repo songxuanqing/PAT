@@ -5,7 +5,7 @@ from ta.volatility import BollingerBands
 
 class SubIndexData():
     def __init__(self):
-        print("보조지표 생성자")
+        print("")
 
     def calc_SMA(self,df,period):
         id_sma = SMAIndicator(close=df['close'],window=period,fillna=True)
