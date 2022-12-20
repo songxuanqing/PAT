@@ -20,15 +20,15 @@ class OrderQueue(observer.Subject):
             return "Success remove!"
         return "observer does not exist."
 
-    def notify_observers(self,order):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
+    def notify_observers(self,type,order):  # 옵저버에게 알리는 부분 (옵저버리스트에 있는 모든 옵저버들의 업데이트 메서드 실행)
         source = "orderQueue"
         for observer in self._observer_list:
-            observer.update(source,order)
+            observer.update(source,type,order)
 
     def add(self,order):
         self.list.append(order)
 
-    def order(self,order):
+    def order(self,type,order):
         self.list.append(order)
         if self.list:
             order = self.list.pop()
@@ -39,5 +39,5 @@ class OrderQueue(observer.Subject):
             if returnCode != 0:
                 print("")
             else:
-                self.notify_observers(order)
+                self.notify_observers(type,order)
 

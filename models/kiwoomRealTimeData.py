@@ -54,7 +54,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
         self.conditionList = conditionList
         self.conditionStatusList = {'코드': [], 'isBuyOrdered': [], 'isSellOrdered': [],
                       'buyChejan': [],
-                      'sellChejan': [], 'currentProfitRate': [],
+                      'sellChejan': [],
                       'accumulatedAmount': [],
                       'buyPrice': [], 'buyVolume': [], 'currentProfitRate': []}
         self.conditionStatusDf = self.prepareConditionStatusDf(self.conditionList, self.screen_condition,1)
@@ -74,14 +74,14 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
         self.AIConditionList = AIConditionList
         self.AIConditionStatusList = {'코드': [], 'isBuyOrdered': [], 'isSellOrdered': [],
                                     'buyChejan': [],
-                                    'sellChejan': [], 'currentProfitRate': [],
+                                    'sellChejan': [],
                                     'accumulatedAmount': [],
                                     'buyPrice': [], 'buyVolume': [], 'currentProfitRate': []}
         self.AIConditionStatusDf = self.prepareConditionStatusDf(self.AIConditionList, self.screen_AI_condition,2)
-
-        for idx, row in self.AIConditionStatusDf.iterrows():
-            self.AIPastDataList = {}  # 코드를 키로 과거 데이터를 밸류로 저장
+        self.AIPastDataList = {}
+        for idx, row in self.AIConditionList.iterrows():
             totalPastData = None
+            code = row['코드']
             if row['AI매매구분']=="일봉 매매":
                 now = datetime.datetime.now()
                 time = now.strftime("%Y%m%d")
@@ -113,7 +113,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
         self.piggleDaoMostVotedDf = self.dataManager.readCSVFile("pats_piggle_dao_most_voted.csv")
         self.piggleDaoMostVotedStatusList = {'코드': [], 'isBuyOrdered': [], 'isSellOrdered': [],
                                       'buyChejan': [],
-                                      'sellChejan': [], 'currentProfitRate': [],
+                                      'sellChejan': [],
                                       'accumulatedAmount': [],
                                       'buyPrice': [], 'buyVolume': [], 'currentProfitRate': []}
         self.piggleDaoMostVotedStatusDf = self.prepareConditionStatusDf(self.piggleDaoMostVotedDf, self.scrren_piggle_dao_most_voted,3)
@@ -155,15 +155,16 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
         self.subject = subject
         self.subject.register_observer(self)
 
-    def update(self, source, order):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
+    def update(self, source, type, order):  # 업데이트 메서드가 실행되면 변화된 내용을 출력
         if source == "kiwoomRealTimeData":
-            self.orderQueue.order(order)
+            self.orderQueue.order(type,order)
         elif source == "orderQueue":
-            msg = "종목명"+str(order.종목명)+"\n"+"주문유형:"+str(order.주문유형)+"\n"\
-                      +"주문가격:"+str(order.주문가격)+"\n"+"주문수량:"+str(order.주문수량)+"\n"\
-                      +"현재수익율"+str(order.현재수익율)+"\n"\
-                      +"목표익절율:"+str(order.목표익절율)+"\n"\
-                      +"목표손절율:"+str(order.목표손절율)
+            msg = "매매방식: "+str(type)+"\n"+"종목명: "+str(order.종목명)+"\n"\
+                  +"주문유형:"+str(order.주문유형)+"\n"\
+                      +"주문가격: "+str(order.주문가격)+"\n"+"주문수량: "+str(order.주문수량)+"\n"\
+                      +"현재수익율: "+str(order.현재수익율)+"\n"\
+                      +"목표익절율: "+str(order.목표익절율)+"\n"\
+                      +"목표손절율: "+str(order.목표손절율)
             self.notify_observers_order(msg)
 
     def register_observer_chejan(self, observer):
@@ -258,6 +259,36 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
         else:
             self.AIConditionList = pandas.concat([self.AIConditionList,conditionDf],ignore_index=True) #조건 추가시 기존 df에 추가
         self.AIConditionStatusDf = self.prepareConditionStatusDf(conditionDf, self.screen_AI_condition, 2)
+        for idx, row in conditionDf.iterrows():
+            totalPastData = None
+            code = row['코드']
+            if row['AI매매구분']=="일봉 매매":
+                now = datetime.datetime.now()
+                time = now.strftime("%Y%m%d")
+                # AI 자동매매 등록한 순간 과거 데이터에 대한 데이터 프레임 생성
+                totalPastData = self.accountData.request_candle_data(code=code,
+                                                                     date=time,
+                                                                     nPrevNext=0,
+                                                                     type="일",
+                                                                     interval=1)
+            elif row['AI매매구분']=='분봉 매매':
+                now = datetime.datetime.now()
+                time = now.strftime("%Y%m%d")
+                # AI 자동매매 등록한 순간 과거 데이터에 대한 데이터 프레임 생성
+                totalPastData = self.accountData.request_candle_data(code=code,
+                                                                     date=time,
+                                                                     nPrevNext=0,
+                                                                     type="분",
+                                                                     interval=1)
+
+            totalPastData = totalPastData.drop('index', axis=1)
+            totalPastData = totalPastData.drop('date', axis=1)
+            totalPastData = totalPastData.drop('open', axis=1)
+            totalPastData = totalPastData.drop('high', axis=1)
+            totalPastData = totalPastData.drop('low', axis=1)
+            totalPastData = totalPastData.drop('volume', axis=1)
+            self.AIPastDataList[code] = totalPastData
+
 
     def editAIConditionDf(self,conditionDf):
         #self.conditionList 변경한다 df는 그대로 둔다.
@@ -304,7 +335,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
 
     def startSelectedCondition(self,codeList):
         for i in codeList:
-            self.subscribe_stock_conclusion(self.screen_code_condition, i)
+            self.subscribe_stock_conclusion(self.screen_condition, i)
 
     # 키움자동매매 조건 일시정지/시작
     def stopAllKiwoomCondition(self):
@@ -337,7 +368,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
 
     def startSelectedAICondition(self,codeList):
         for i in codeList:
-            self.subscribe_stock_conclusion(self.screen_code_AI_condition, i)
+            self.subscribe_stock_conclusion(self.screen_AI_condition, i)
 
     #메인 화면 선택 종목의 실시간 데이터 가져오기
     def getRealPriceData(self,code):
@@ -591,7 +622,11 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                             timeFormat = "%Y-%m-%d"
                             url = "day"
                             currentProfitRate = 0.0
-                            i_num = 499
+                            if(len(self.AIPastDataList[code])>=499):
+                                i_num = 499
+                            else:
+                                i_num = len(self.AIPastDataList[code])-101
+                            print(i_num)
                             self.AIFirstBuy(isBuyOrdered,isSellOrdered,buyChejan,
                                             code, codeName, currentPrice,
                                             timeFormat, totalBuyAmountPerTime,totalBuyAmount,
@@ -602,7 +637,10 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                             timeFormat = "%Y-%m-%d %H:%M:%S"
                             url = "min"
                             currentProfitRate = 0.0
-                            i_num = 799
+                            if (len(self.AIPastDataList[code]) >= 799):
+                                i_num = 799
+                            else:
+                                i_num = len(self.AIPastDataList[code])-101
                             self.AIFirstBuy(isBuyOrdered, isSellOrdered, buyChejan,
                                             code, codeName, currentPrice,
                                             timeFormat, totalBuyAmountPerTime, totalBuyAmount,
@@ -624,7 +662,10 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                         if dayOrMin == "일봉 매매":
                             timeFormat = "%Y-%m-%d"
                             url = "day"
-                            i_num = 499
+                            if (len(self.AIPastDataList[code]) >= 499):
+                                i_num = 499
+                            else:
+                                i_num = len(self.AIPastDataList[code])-101
                             # 시간이 오후 3시 20분 이상일 때만 매매할지 체크한다.
                             dueTime = datetime.datetime.strptime('1998-01-01 15:20:00', '%Y-%m-%d %H:%M:%S')
                             if now.time() >= dueTime.time():
@@ -640,7 +681,10 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                         elif dayOrMin == "분봉 매매":
                             timeFormat = "%Y-%m-%d %H:%M:%S"
                             url = "min"
-                            i_num = 799
+                            if (len(self.AIPastDataList[code]) >= 799):
+                                i_num = 799
+                            else:
+                                i_num = len(self.AIPastDataList[code])-101
                             self.AISecondBuySell(isBuyOrdered, isSellOrdered, buyChejan,
                                                  code, codeName, currentPrice,
                                                  timeFormat, totalBuyAmountPerTime, totalBuyAmount,
@@ -694,7 +738,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                             buyChejan = row['buyChejan']
                             sellChejan = row['sellChejan']
                             condi_code = None
-                            accumulatedAmount = None
+                            accumulatedAmount = 0
 
                 if not isBuyOrdered:
                     # 매수로직
@@ -728,7 +772,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                 currentProfitRate = float(((currentPrice - int(prevPrice)) / currentPrice) * 100)
                                 canSellVolume = row['buyVolume']
 
-                    self.conditionSell(code, codeName, currentPrice, buyPrice, currentProfitRate, profitRate,
+                    self.conditionSell(code, codeName, currentPrice, buyPrice, accumulatedAmount, currentProfitRate, profitRate,
                                        lossRate, maxProfitRate, maxLossRate, profitSellVolume, lossSellVolume,
                                        canSellVolume)
         # for i in range(5):
@@ -767,8 +811,9 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
             statusList['buyPrice'].append(0)
             statusList['buyVolume'].append(0)
             statusList['currentProfitRate'].append("0")
+            statusList['accumulatedAmount'].append(0)
         df = pandas.DataFrame(statusList,columns=['코드', 'isBuyOrdered', 'isSellOrdered',
-                                                  'buyChejan','sellChejan', 'buyPrice', 'buyVolume',
+                                                  'buyChejan','sellChejan','accumulatedAmount', 'buyPrice', 'buyVolume',
                                                    'currentProfitRate'])
         if type == 1:
             self.conditionStatusList = statusList
@@ -857,7 +902,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                      codeName, sellVolume, currentPrice, "00", "", profitRate,
                                      lossRate, str(currentProfitRate), now)
         # 주문생성시만 어카운트 정보 업데이트
-        self.update("kiwoomRealTimeData", sell_order)
+        self.update("kiwoomRealTimeData", "피글DAO 연동 매매", sell_order)
         self.updatePiggleDaoMostVotedDf(code, currentPrice, None, False, True, False, None, currentProfitRate)
 
     def piggleDaoMostVotedBuy(self, code, codeName, currentPrice, buyPrice, buyVolume, profitRate, lossRate):
@@ -870,7 +915,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                             currentPrice, "00", "", profitRate, lossRate,
                                             0.0, now)
                 # 주문생성시만 어카운트 정보 업데이트
-                self.update("kiwoomRealTimeData", buy_order)
+                self.update("kiwoomRealTimeData", "피글DAO 연동 매매", buy_order)
                 self.updatePiggleDaoMostVotedDf(code, currentPrice, buyVolume, True, False, True, None, 0.0)
 
     def updatePiggleDaoMostVotedDf(self, code, currentPrice, buyVolume, isBuyOrdered, isSellOrdered,
@@ -921,7 +966,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                      codeName, sellVolume, currentPrice, "00", "", profitRate,
                                      lossRate, str(currentProfitRate), now)
             # 주문생성시만 어카운트 정보 업데이트
-            self.update("kiwoomRealTimeData", sell_order)
+            self.update("kiwoomRealTimeData", "단일종목 매매", sell_order)
             if buyPrice == 0:
                 self.updateKiwoomConditionDf(code, currentPrice, None, sellVolume, True, False, True, None, currentProfitRate, accumulatedAmount)
 
@@ -949,7 +994,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                                     currentPrice, "00", "", profitRate, lossRate,
                                                     currentProfitRate, now)
                             # 주문생성시만 어카운트 정보 업데이트
-                            self.update("kiwoomRealTimeData", buy_order)
+                            self.update("kiwoomRealTimeData","단일종목 매매", buy_order)
                             self.updateKiwoomConditionDf(code, currentPrice, buyVolume, None, True, False, True, None,
                                                          0.0,
                                                          accumulatedAmount)
@@ -965,7 +1010,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                             currentPrice, "00", "", profitRate, lossRate,
                                             0.0, now)
                     # 주문생성시만 어카운트 정보 업데이트
-                    self.update("kiwoomRealTimeData", buy_order)
+                    self.update("kiwoomRealTimeData","단일종목 매매", buy_order)
                     self.updateConditionDf(code, currentPrice, buyVolume, True, False, True, None, 0.0)
 
     def updateConditionDf(self, code, currentPrice, buyVolume, isBuyOrdered, isSellOrdered,
@@ -1007,6 +1052,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                    timeFormat, totalBuyAmountPerTime,totalBuyAmount,
                    accumulatedAmount, currentProfitRate, profitRate,
                    lossRate, i_num, url):
+        print("ai first buy"+str(i_num))
         first, xhat = self.prepareInputData(code, currentPrice, timeFormat, i_num)
         self.id = self.id + 1
         aiTradingVals = {"currentPrice": currentPrice,
@@ -1029,7 +1075,8 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                                 'aiTradingVals': [aiTradingVals]})
         self.predictRequestDf = pandas.concat([self.predictRequestDf, newPredictRequestDf])
         self.predictRequestDf.set_index(self.predictRequestDf['id'], inplace=True)
-        api = 'http://3.39.84.115:9000/'+url
+        # api = 'http://3.39.84.115:9000/'+url
+        api = 'http://localhost:9000/'+url
         self.networkAccessManager.post(QtNetwork.QNetworkRequest(QUrl(api)), input)
 
 
@@ -1049,7 +1096,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                      codeName, sellVolume, currentPrice, "00", "", profitRate,
                                      lossRate, str(currentProfitRate), now)
             # 주문생성시만 어카운트 정보 업데이트
-            self.update("kiwoomRealTimeData", sell_order)
+            self.update("kiwoomRealTimeData","AI자동 매매", sell_order)
             self.updateAIConditionDf(code, currentPrice, 0, False, True, None, False, currentProfitRate,
                                      accumulatedAmount)
         else:
@@ -1075,7 +1122,8 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                                     'aiTradingVals': [aiTradingVals]})
             self.predictRequestDf = pandas.concat([self.predictRequestDf, newPredictRequestDf])
             self.predictRequestDf.set_index(self.predictRequestDf['id'], inplace=True)
-            api = 'http://3.39.84.115:9000/' + url
+            # api = 'http://3.39.84.115:9000/' + url
+            api = 'http://localhost:9000/' + url
             self.networkAccessManager.post(QtNetwork.QNetworkRequest(QUrl(api)), input)
 
 
@@ -1109,9 +1157,12 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
         df = pandas.DataFrame(arr, columns=['date', 'close'])
         df.set_index(df['date'], inplace=True)
         df = df.drop('date', axis=1)
-
-        pastData.append(df)  # 새로운 가격을 데이터프레임에 추가
+        print(len(pastData))
+        pastData = pandas.concat([pastData, df]) # 새로운 가격을 데이터프레임에 추가
+        print(len(pastData))
         pastData = pastData.iloc[:-1]  # 마지막 데이터프레임 로우를 삭제
+        print(len(pastData))
+        print(i_num)
         # 예측가 계산
         # 과거데이터 100일치 가져오기>차이값계산 (xhat) 1번에 600개, 0이 가장 최근 값
         window_size = 100
@@ -1147,7 +1198,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
             id = obj['id']
             output = obj['output']
             yhat = output.toDouble()
-
+            print("yhat"+str(yhat))
             s = self.predictRequestDf['aiTradingVals']
             v = s[id.toInt()]
             self.predictRequestDf = self.predictRequestDf.drop(id.toInt())
@@ -1187,7 +1238,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                                     currentPrice, "00", "", profitRate, lossRate,
                                                     currentProfitRate, now)
                             # 주문생성시만 어카운트 정보 업데이트
-                            self.update("kiwoomRealTimeData", buy_order)
+                            self.update("kiwoomRealTimeData","AI자동 매매", buy_order)
                             self.updateAIConditionDf(code, currentPrice, buyVolume, True, False, True, None,
                                                      currentProfitRate,
                                                      accumulatedAmount)
@@ -1210,7 +1261,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                                     currentPrice, "00", "", profitRate, lossRate,
                                                     str(currentProfitRate), now)
                             # 주문생성시만 어카운트 정보 업데이트
-                            self.update("kiwoomRealTimeData", buy_order)
+                            self.update("kiwoomRealTimeData","AI자동 매매", buy_order)
                             self.updateAIConditionDf(code, currentPrice, buyVolume, True, False, True, None,
                                                      currentProfitRate,
                                                      accumulatedAmount)
@@ -1223,7 +1274,7 @@ class KiwoomRealTimeData(observer.Observer, observerAccount.Observer, observerOr
                                              profitRate,
                                              lossRate, str(currentProfitRate), now)
                     # 주문생성시만 어카운트 정보 업데이트
-                    self.update("kiwoomRealTimeData", sell_order)
+                    self.update("kiwoomRealTimeData","AI자동 매매", sell_order)
                     self.updateAIConditionDf(code, currentPrice, 0, False, True, None, False, currentProfitRate,
                                              accumulatedAmount)
                 else:
