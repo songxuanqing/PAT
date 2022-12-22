@@ -1,0 +1,38 @@
+{
+  "button": {
+    "confirm": "확인",
+    "cancel": "취소"
+  },
+  "updateLog": {
+    "piggleDao": "피글DAO 연동 매매",
+    "oneStock": "단일종목 매매",
+    "AI": "AI자동 매매"
+  },
+  "saveCondition": "조건 저장",
+  "nullCode": "종목 코드를 입력하세요. ",
+  "alreadyRegistered": "이미 자동매매로 등록된 종목입니다. ",
+  "notZeroForBuyPrice": "회당 매수액은 0보다 커야합니다. ",
+  "notZeroForTotalBuyPrice": "총 금액은 0보다 커야합니다. ",
+  "endLaterThanStart": "시작 시간은 끝시간보다 앞서야합니다. ",
+  "maxMoreThanProfit": "최대익절율은 부분익절율보다 커야합니다. ",
+  "maxMoreThanLoss": "최대손절율은 부분손절율보다 커야합니다. ",
+  "selectCondiCode": "조건을 선택하세요. ",
+  "alreadyRegisteredCondition": "이미 자동매매로 등록된 조건입니다. ",
+  "noZeroForBuyPricePerStock": "종목당 매수가는 0보다 커야합니다. ",
+  "removeCondition": "조건 삭제",
+  "moreThanOneConditionForDelete": "삭제할 조건을 하나 이상 선택해주세요. ",
+  "editCondition": "조건 수정",
+  "selectConditionForEdit": "수정할 조건을 선택해주세요. ",
+  "onlyOneConditionForEdit": "수정할 조건을 하나만 선택해주세요. ",
+  "stopCondition": "조건 중지",
+  "stopAllCondition": "모든 조건 자동매매를 중지합니다. ",
+  "selectConditionForStop": "멈출 조건을 하나 이상 선택해주세요. ",
+  "stoppedCondition": "선택한 조건 자동매매를 중지합니다. ",
+  "selectConditionForStart": "시작할 조건을 하나 이상 선택해주세요. ",
+  "startCondition": "조건 시작",
+  "startedCondition": "선택한 조건 자동매매를 시작합니다. ",
+  "installKWAPI": "키움 증권 API 설치",
+  "restartAfterKWAPI": "키움 증권 Open API 설치 완료 후 다시 시작하세요. ",
+  "failLogin": "로그인 실패",
+  "checkLoginInfo": "로그인 정보를 확인해주세요. "
+}

@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 import sys
 import datetime
 import re
@@ -47,7 +48,7 @@ import editConditionKW
 import settingPiggleDaoMostVoted
 import models.scheduler as Scheduler
 import os
-
+import openJson
 
 
 class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer, observerOrder.Observer, observerSubIndexList.Observer, observerChejan.Observer, observerMainPrice.Observer):  # Window 클래스 QMainWindow, form_class 클래스를 상속 받아 생성됨
@@ -58,6 +59,20 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         self.CommmConnect()
 
     def setup(self):
+        self.msg, self.params = openJson.getJsonFiles()
+        self.removeCondition = self.msg['removeCondition']
+        self.moreThanOneConditionForDelete = self.msg['moreThanOneConditionForDelete']
+        self.editConditionMsg = self.msg['editCondition']
+        self.selectConditionForEdit = self.msg['selectConditionForEdit']
+        self.onlyOneConditionForEdit = self.msg['onlyOneConditionForEdit']
+        self.stopCondition = self.msg['stopCondition']
+        self.stopAllConditionMsg = self.msg['stopAllCondition']
+        self.selectConditionForStop = self.msg['selectConditionForStop']
+        self.stoppedCondition = self.msg['stoppedCondition']
+        self.selectConditionForStart = self.msg['selectConditionForStart']
+        self.startCondition = self.msg['startCondition']
+        self.startedCondition = self.msg['startedCondition']
+
         self.ui = uic.loadUi("main.ui", self)  # ui 파일 불러오기
 
         self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint)
@@ -104,8 +119,8 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         self.subIndexList = self.subindexlist.getList()
 
 
-        self.selectedStock = "005930 : 삼성전자"
-        self.selectedCandle = "1 일"
+        self.selectedStock = self.params['mainWindow']['setup']['selectedStockInit']
+        self.selectedCandle = self.params['mainWindow']['setup']['selectedCandleInit']
         self.selectedSubIndices = []
         self.getLatestVariables()
 
@@ -228,11 +243,13 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         if err_code == 0:
             self.setup()
         else:
-            choice = QtWidgets.QMessageBox.information(self, '로그인 실패',
-                                                       "로그인 정보를 확인해주세요. ",
+            failLogin = self.msg['failLogin']
+            checkLoginInfo = self.msg['checkLoginInfo']
+            choice = QtWidgets.QMessageBox.information(self, failLogin,
+                                                       checkLoginInfo,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
-                print("로그인 성공")
+                print("")
 
 
     def CommmConnect(self):
@@ -335,13 +352,15 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
     def displayFavoriteList(self):
         self.tv_favorite.clear()
         for idx,row in self.favoriteList.iterrows():
-            item = row['즐겨찾기']
+            name = self.params["mainWindow"]["displayFavoriteList"]["rowName"]
+            item = row[name]
             self.tv_favorite.addItem(item)
 
     def setFavoriteIcon(self):
         if len(self.favoriteList)>0:
             for idx,row in self.favoriteList.iterrows():
-                if row['즐겨찾기'] == self.selectedStock:
+                name = self.params["mainWindow"]["displayFavoriteList"]["rowName"]
+                if row[name] == self.selectedStock:
                     isFavorite = True
                     break
                 else :
@@ -354,8 +373,18 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
             self.bt_favorite.setIcon(QIcon('star-blank.png'))
 
     def displayChejanTable(self):
-        headerList = ['종목코드','종목명','매매구분','매매가','매매량','현재수익율','부분익절율',
-                                            '최대익절율','부분손절율','최대손전율']
+        code = self.params["mainWindow"]["displayChejanTable"]["code"]
+        name = self.params["mainWindow"]["displayChejanTable"]["name"]
+        type = self.params["mainWindow"]["displayChejanTable"]["type"]
+        price = self.params["mainWindow"]["displayChejanTable"]["price"]
+        qty = self.params["mainWindow"]["displayChejanTable"]["qty"]
+        currentProfitRate = self.params["mainWindow"]["displayChejanTable"]["currentProfitRate"]
+        profitRate = self.params["mainWindow"]["displayChejanTable"]["profitRate"]
+        maxProfitRate = self.params["mainWindow"]["displayChejanTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayChejanTable"]["lossRate"]
+        maxLossRate = self.params["mainWindow"]["displayChejanTable"]["maxLossRate"]
+
+        headerList = [code,name,type,price,qty,currentProfitRate,profitRate,maxProfitRate,lossRate,maxLossRate]
         nRows = 0
         nColumns = len(headerList)
         self.tbl_chejan.setRowCount(nRows)
@@ -367,7 +396,15 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         self.tbl_chejan.resizeRowsToContents()
 
     def displayRealPriceTable(self):
-        headerList = ['현재가', '전일대비', '등락율', '누적거래량', '시가', '고가', '저가']
+        price = self.params["mainWindow"]["displayRealPriceTable"]["price"]
+        compareToYesterday = self.params["mainWindow"]["displayRealPriceTable"]["compareToYesterday"]
+        roc = self.params["mainWindow"]["displayRealPriceTable"]["roc"]
+        accumulatedVolume = self.params["mainWindow"]["displayRealPriceTable"]["accumulatedVolume"]
+        start = self.params["mainWindow"]["displayRealPriceTable"]["start"]
+        high = self.params["mainWindow"]["displayRealPriceTable"]["high"]
+        low = self.params["mainWindow"]["displayRealPriceTable"]["low"]
+
+        headerList = [price,compareToYesterday,roc,accumulatedVolume,start,high,low]
         nColumns = 1
         nRows = len(headerList)
 
@@ -407,9 +444,25 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
                 else:
                     x = self.monitoredConditionList.iloc[i, (j - 1)]  # 체크박스 하나 추가되었으므로, 데이터는 컬럼 index 전부터 가져오기
                     self.tbl_manageConditions.setItem(i, j, QtWidgets.QTableWidgetItem(str(x)))
+
+        checkbox = self.params["mainWindow"]["displayConditionTable"]["checkbox"]
+        id = self.params["mainWindow"]["displayConditionTable"]["id"]
+        code = self.params["mainWindow"]["displayConditionTable"]["code"]
+        name = self.params["mainWindow"]["displayConditionTable"]["name"]
+        price = self.params["mainWindow"]["displayConditionTable"]["price"]
+        totalPrice = self.params["mainWindow"]["displayConditionTable"]["totalPrice"]
+        startTime = self.params["mainWindow"]["displayConditionTable"]["startTime"]
+        endTime = self.params["mainWindow"]["displayConditionTable"]["endTime"]
+        profitRate = self.params["mainWindow"]["displayConditionTable"]["profitRate"]
+        profitQtyPercent = self.params["mainWindow"]["displayConditionTable"]["profitQtyPercent"]
+        maxProfitRate = self.params["mainWindow"]["displayConditionTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayConditionTable"]["lossRate"]
+        lossQtyPercent = self.params["mainWindow"]["displayConditionTable"]["lossQtyPercent"]
+        maxLossRate = self.params["mainWindow"]["displayConditionTable"]["maxLossRate"]
+
         self.tbl_manageConditions.setHorizontalHeaderLabels(
-            ["", 'ID', '코드', '종목명', '매수가', '총금액', '시작시간', '종료시간', '부분익절율', '부분익절수량',
-             '최대익절율', '부분손절율', '부분손절수량', '최대손절율'])
+            [checkbox,id,code,name,price,totalPrice,startTime,endTime,
+             profitRate,profitQtyPercent,maxProfitRate,lossRate,lossQtyPercent,maxLossRate])
         for i in range(nColumns):
             if i == 0 or i == 1:
                 self.tbl_manageConditions.setColumnWidth(i, 20)
@@ -434,9 +487,24 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
                 else:
                     x = self.monitoredKiwoomConditionList.iloc[i, (j-1)] #체크박스 하나 추가되었으므로, 데이터는 컬럼 index 전부터 가져오기
                     self.tbl_manageKiwoomConditions.setItem(i, j, QtWidgets.QTableWidgetItem(str(x)))
-        self.tbl_manageKiwoomConditions.setHorizontalHeaderLabels(["",'ID','조건코드','조건명','총금액','종목당금액',
-                                   '시작시간','종료시간','부분익절율','부분익절수량','최대익절율',
-                                   '부분손절율','부분손절수량','최대손절율'])
+
+        checkbox = self.params["mainWindow"]["displayKiwoomConditionTable"]["checkbox"]
+        id = self.params["mainWindow"]["displayKiwoomConditionTable"]["id"]
+        code = self.params["mainWindow"]["displayKiwoomConditionTable"]["code"]
+        name = self.params["mainWindow"]["displayKiwoomConditionTable"]["name"]
+        totalPrice = self.params["mainWindow"]["displayKiwoomConditionTable"]["totalPrice"]
+        price = self.params["mainWindow"]["displayKiwoomConditionTable"]["price"]
+        startTime = self.params["mainWindow"]["displayKiwoomConditionTable"]["startTime"]
+        endTime = self.params["mainWindow"]["displayKiwoomConditionTable"]["endTime"]
+        profitRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["profitRate"]
+        profitQtyPercent = self.params["mainWindow"]["displayKiwoomConditionTable"]["profitQtyPercent"]
+        maxProfitRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["lossRate"]
+        lossQtyPercent = self.params["mainWindow"]["displayKiwoomConditionTable"]["lossQtyPercent"]
+        maxLossRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["maxLossRate"]
+
+        self.tbl_manageKiwoomConditions.setHorizontalHeaderLabels([checkbox,id,code,name,totalPrice,price,startTime,endTime,
+             profitRate,profitQtyPercent,maxProfitRate,lossRate,lossQtyPercent,maxLossRate])
         for i in range(nColumns):
             if i == 0 or i == 1:
                 self.tbl_manageKiwoomConditions.setColumnWidth(i, 20)
@@ -460,9 +528,26 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
                 else:
                     x = self.monitoredAIConditionList.iloc[i, (j - 1)]  # 체크박스 하나 추가되었으므로, 데이터는 컬럼 index 전부터 가져오기
                     self.tbl_manageAIConditions.setItem(i, j, QtWidgets.QTableWidgetItem(str(x)))
+
+        checkbox = self.params["mainWindow"]["displayAIConditionTable"]["checkbox"]
+        id = self.params["mainWindow"]["displayAIConditionTable"]["id"]
+        code = self.params["mainWindow"]["displayAIConditionTable"]["code"]
+        name = self.params["mainWindow"]["displayAIConditionTable"]["name"]
+        buyType = self.params['kiwoomRealTimeData']['AIConditionList']['type']
+        buyAmountPerTime = self.params["mainWindow"]["displayAIConditionTable"]["buyAmountPerTime"]
+        totalPrice = self.params["mainWindow"]["displayAIConditionTable"]["totalPrice"]
+        startTime = self.params["mainWindow"]["displayAIConditionTable"]["startTime"]
+        endTime = self.params["mainWindow"]["displayAIConditionTable"]["endTime"]
+        profitRate = self.params["mainWindow"]["displayAIConditionTable"]["profitRate"]
+        profitQtyPercent = self.params["mainWindow"]["displayAIConditionTable"]["profitQtyPercent"]
+        maxProfitRate = self.params["mainWindow"]["displayAIConditionTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayAIConditionTable"]["lossRate"]
+        lossQtyPercent = self.params["mainWindow"]["displayAIConditionTable"]["lossQtyPercent"]
+        maxLossRate = self.params["mainWindow"]["displayAIConditionTable"]["maxLossRate"]
+
         self.tbl_manageAIConditions.setHorizontalHeaderLabels(
-            ["", 'ID', '코드', '종목명', '구분', '회당매수액','총금액', '시작시간', '종료시간', '부분익절율', '부분익절수량', '최대익절율',
-                                       '부분손절율', '부분손절수량', '최대손절율'])
+            [checkbox,id,code,name,buyType,totalPrice,buyAmountPerTime,startTime,endTime,
+             profitRate,profitQtyPercent,maxProfitRate,lossRate,lossQtyPercent,maxLossRate])
         for i in range(nColumns):
             if i == 0 or i == 1:
                 self.tbl_manageAIConditions.setColumnWidth(i, 20)
@@ -552,33 +637,67 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
     def calcSubIndexChartDataFrame(self,df):
         subIndex = SubIndexData.SubIndexData()
         if len(self.selectedSubIndices) >= 1:
+            mavg5 = self.params["mainWindow"]["subIndex"]["mavg5"]
+            mavg10 = self.params["mainWindow"]["subIndex"]["mavg10"]
+            mavg20 = self.params["mainWindow"]["subIndex"]["mavg20"]
+            mavg60 = self.params["mainWindow"]["subIndex"]["mavg60"]
+            rsi = self.params["mainWindow"]["subIndex"]["rsi"]
+            sc = self.params["mainWindow"]["subIndex"]["sc"]
+            macd = self.params["mainWindow"]["subIndex"]["macd"]
+            ilmock = self.params["mainWindow"]["subIndex"]["ilmock"]
+            bb = self.params["mainWindow"]["subIndex"]["bb"]
             for i in self.selectedSubIndices:
-                if (i == "RSI"):
+                if (i == rsi):
                     df = subIndex.calc_RSI(df)
-                elif (i == "일목균형표"):
+                elif (i == ilmock):
                     df = subIndex.calc_ichimoku(df)
-                elif (i == "5-이평선"):
+                elif (i == mavg5):
                     df = subIndex.calc_SMA(df, 5)
-                elif (i == "10-이평선"):
+                elif (i == mavg10):
                     df = subIndex.calc_SMA(df, 10)
-                elif (i == "20-이평선"):
+                elif (i == mavg20):
                     df = subIndex.calc_SMA(df, 20)
-                elif (i == "60-이평선"):
+                elif (i == mavg60):
                     df = subIndex.calc_SMA(df, 60)
-                elif (i == "스토캐스틱"):
+                elif (i == sc):
                     df = subIndex.calc_stochastic(df)
-                elif (i == "MACD"):
+                elif (i == macd):
                     df = subIndex.calc_MACD(df)
-                elif (i == "BB"):
+                elif (i == bb):
                     df = subIndex.calc_BB(df)
         return df
 
     def drawChart(self,df):
+        mavg5 = self.params["mainWindow"]["subIndex"]["mavg5"]
+        mavg10 = self.params["mainWindow"]["subIndex"]["mavg10"]
+        mavg20 = self.params["mainWindow"]["subIndex"]["mavg20"]
+        mavg60 = self.params["mainWindow"]["subIndex"]["mavg60"]
+        rsi = self.params["mainWindow"]["subIndex"]["rsi"]
+        sc = self.params["mainWindow"]["subIndex"]["sc"]
+        macd = self.params["mainWindow"]["subIndex"]["macd"]
+        ilmock = self.params["mainWindow"]["subIndex"]["ilmock"]
+        bb = self.params["mainWindow"]["subIndex"]["bb"]
+
+        mavg = self.params["mainWindow"]["drawChart"]["mavg"]
+        volume = self.params["mainWindow"]["drawChart"]["range"]["volume"]
+        span1 = self.params["mainWindow"]["drawChart"]["range"]["span1"]
+        span2 = self.params["mainWindow"]["drawChart"]["range"]["span2"]
+        stdLine = self.params["mainWindow"]["drawChart"]["range"]["stdLine"]
+        conversionLine = self.params["mainWindow"]["drawChart"]["range"]["conversionLine"]
+        highBand = self.params["mainWindow"]["drawChart"]["range"]["highBand"]
+        midLine = self.params["mainWindow"]["drawChart"]["range"]["midLine"]
+        lowBand = self.params["mainWindow"]["drawChart"]["range"]["lowBand"]
+
+        min = self.params["mainWindow"]["drawChart"]["candle"]["min"]
+        day = self.params["mainWindow"]["drawChart"]["candle"]["day"]
+        week = self.params["mainWindow"]["drawChart"]["candle"]["week"]
+        month = self.params["mainWindow"]["drawChart"]["candle"]["month"]
+
         #rows 계산하기
         rows = 2
-        if ("RSI" in self.selectedSubIndices) or ("스토캐스틱" in self.selectedSubIndices) :
+        if (rsi in self.selectedSubIndices) or (sc in self.selectedSubIndices) :
             rows = rows + 1
-        if ("MACD" in self.selectedSubIndices) :
+        if (macd in self.selectedSubIndices) :
             rows = rows + 1
         if rows == 2 :
             row_width = [0.2, 0.7]
@@ -599,65 +718,65 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
                                              close=df['close'],showlegend=False),row=1, col=1)
 
         # Bar trace for volumes on 2nd row without legend
-        fig.add_trace(go.Bar(x=df['date'], y=df['volume'], name="거래량", showlegend=False), row=2, col=1)
+        fig.add_trace(go.Bar(x=df['date'], y=df['volume'], name=volume, showlegend=False), row=2, col=1)
 
         # #if문으로 보조지표 선택시 차트 그리기
         if len(self.selectedSubIndices) >= 1:
             for i in self.selectedSubIndices:
                 #일목균형표, 이평선, BB는 가격차트(1), RSI, 스토캐스틱은 3번차트, MACD는 4번 차트
-                if (i == "일목균형표"):
+                if (i == ilmock):
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.span_a,
                                              fill=None,
                                              line=dict(color='pink', width=1),
-                                             name='스팬 1'
+                                             name=span1
                                              ), row=1, col=1)
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.span_b,
                                              fill='tonexty',  # 스팬 a , b 사이에 컬러 채우기
                                              line=dict(color='lightsteelblue', width=1),
-                                             name='스팬 2'
+                                             name=span2
                                              ), row=1, col=1)
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.base_line,
                                              fill=None,
                                              line=dict(color='green', width=3),
-                                             name='기준선'
+                                             name=stdLine
                                              ), row=1, col=1)
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.conv_line,
                                              fill=None,
                                              line=dict(color='darkorange', width=1),
-                                             name='전환선'
+                                             name=conversionLine
                                              ), row=1, col=1)
-                elif "이평선" in i:
+                elif mavg in i:
                     lenDays = len(i.split("-")[0]) #이평선 날짜수 구하기 ex)이평선 x일 or xx일 따라서 len - 1만큼 파싱
                     col = i.split("-")[0][:lenDays]+"sma"
                     fig.add_trace(go.Scatter(x=df['date'], y=df[col],
                                              mode="lines", name=i, showlegend=True), row=1, col=1)
-                elif (i == "BB"):
+                elif (i == bb):
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.bb_mavg,
                                              fill=None,
                                              line=dict(color='red', width=1),
-                                             name='상단밴드'
+                                             name=highBand
                                              ), row=1, col=1)
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.bb_h,
                                              fill=None,
                                              line=dict(color='green', width=1),
-                                             name='중심선'
+                                             name=midLine
                                              ), row=1, col=1)
                     fig.add_trace(go.Scatter(x=df['date'],
                                              y=df.bb_l,
                                              fill=None,
                                              line=dict(color='blue', width=1),
-                                             name='하단밴드'
+                                             name=lowBand
                                              ), row=1, col=1)
-                elif (i == "RSI"):
+                elif (i == rsi):
                     fig.add_trace(go.Scatter(x=df['date'], y=df['rsi'],
                                              mode="lines", name="RSI", showlegend=True), row=3, col=1)
-                elif (i == "스토캐스틱"):
+                elif (i == sc):
                     fig.add_trace(go.Scatter(x=df['date'], y=df.stoch_k,
                                              fill=None,
                                              line=dict(color='lightsteelblue', width=1),
@@ -666,7 +785,7 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
                                              fill=None,
                                              line=dict(color='orange', width=1),
                                              name='stoch_d'), row=3, col=1)
-                elif (i == "MACD"):
+                elif (i == macd):
                     if rows == 4 :
                         mac_row = 4
                     elif rows == 3 :
@@ -684,7 +803,7 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         fig.update(layout_xaxis_rangeslider_visible=False)
         # fig.update(layout_xaxis2_rangeslider_visible=True)
 
-        if "분" in self.selectedCandle :
+        if min in self.selectedCandle :
             fig.update_xaxes(
                 rangebreaks=[
                     # NOTE: Below values are bound (not single values), ie. hide x to y
@@ -757,16 +876,23 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         self.displayChart()
 
     def createLatestVariablesFile(self):
-        latestList = ['종목','캔들','보조지표']
+        code = self.params["mainWindow"]["createLatestVariablesFile"]["code"]
+        candle = self.params["mainWindow"]["createLatestVariablesFile"]["candle"]
+        subIndex = self.params["mainWindow"]["createLatestVariablesFile"]["subIndex"]
+        latestList = [code,candle,subIndex]
         self.dataManager.createCSVFile("pats_latest.csv",latestList)
 
     def getLatestVariables(self):
+        code = self.params["mainWindow"]["createLatestVariablesFile"]["code"]
+        candle = self.params["mainWindow"]["createLatestVariablesFile"]["candle"]
+        subIndex = self.params["mainWindow"]["createLatestVariablesFile"]["subIndex"]
+
         df = self.dataManager.readCSVFile("pats_latest.csv")
         for idx, row in df.iterrows():
             if idx == 0:
-                self.selectedStock = row['종목']
-                self.selectedCandle = row['캔들']
-                subString = row['보조지표'].replace("[","")
+                self.selectedStock = row[code]
+                self.selectedCandle = row[candle]
+                subString = row[subIndex].replace("[","")
                 subString = subString.replace("]", "")
                 subString = subString.replace("'","")
                 subStringList = subString.split(", ")
@@ -774,13 +900,18 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
                     self.selectedSubIndices.append(i)
 
     def saveLatestVariables(self):
-        df = pd.DataFrame([[self.selectedStock,self.selectedCandle,self.selectedSubIndices]],columns=['종목','캔들','보조지표'])
+        code = self.params["mainWindow"]["createLatestVariablesFile"]["code"]
+        candle = self.params["mainWindow"]["createLatestVariablesFile"]["candle"]
+        subIndex = self.params["mainWindow"]["createLatestVariablesFile"]["subIndex"]
+        df = pd.DataFrame([[self.selectedStock,self.selectedCandle,self.selectedSubIndices]],
+                          columns=[code, candle, subIndex])
         self.dataManager.updateCSVFile("pats_latest.csv",df)
 
     def openRegisterCondition(self):
         #만약 현재 조건이 이미 있으면 마지막열 id가져오고, 아니라면 0으로 한다.
         if len(self.monitoredConditionList)>0:
-            lastConditionId =self.monitoredConditionList['ID'].iloc[-1]
+            id = self.params["mainWindow"]["displayConditionTable"]["id"]
+            lastConditionId =self.monitoredConditionList[id].iloc[-1]
         else:
             lastConditionId = 0
         regCondi = registerCondition.RegisterCondition(self.dataManager,lastConditionId,self.stockList,self.monitoredConditionList)
@@ -799,18 +930,20 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def deleteConditions(self):
         if len(self.checkedConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 삭제',
-                                                "삭제할 조건을 하나 이상 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.removeCondition,
+                                                self.moreThanOneConditionForDelete,
                                                 QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             dropCodeList = []
+            id_table = self.params["mainWindow"]["displayConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayConditionTable"]["code"]
             for id in self.checkedConditionList:
-                df = self.monitoredConditionList.loc[self.monitoredConditionList['ID']!=id]
-                dropDf = self.monitoredConditionList.loc[self.monitoredConditionList['ID']==id]
+                df = self.monitoredConditionList.loc[self.monitoredConditionList[id_table]!=id]
+                dropDf = self.monitoredConditionList.loc[self.monitoredConditionList[id_table]==id]
                 for idx,row in dropDf.iterrows():
-                    dropCodeList.append(row['코드'])
+                    dropCodeList.append(row[code])
             self.autoTrading.deleteConditionDf(dropCodeList)
             self.dataManager.removeRows("pats_condition.csv",df)
             self.monitoredConditionList = self.getSavedConditionList()
@@ -820,27 +953,42 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
     def editCondition(self):
         #self.checkedConditionList 아이템 갯수 확인 1개 아니면 진행하지 않는다. 노티피케이션 보인다.
         if len(self.checkedConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
-                                                "수정할 조건을 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.editConditionMsg,
+                                                 self.selectConditionForEdit,
                                                 QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         elif len(self.checkedConditionList) > 1 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
-                                                "수정할 조건을 하나만 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self,  self.editConditionMsg,
+                                                self.onlyOneConditionForEdit,
                                                 QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             id = self.checkedConditionList[0]
+            id_table = self.params["mainWindow"]["displayConditionTable"]["id"]
             #체크한 아이디와 동일한 id를 가진 조건을 가져와서(df 시리즈) 수정 페이지로 넘긴다.
-            dataRow = self.monitoredConditionList[self.monitoredConditionList['ID'] == id]
+            dataRow = self.monitoredConditionList[self.monitoredConditionList[id_table] == id]
             editCondi = editCondition.EditCondition(self.dataManager, dataRow, self.monitoredConditionList, self.stockList)
             self.register_subject_condition(editCondi)
 
     def createConditionFile(self):
-        conditionHeaderList = ['ID','코드','종목명','매수가','총금액','시작시간','종료시간',
-                     '부분익절율','부분익절수량','최대익절율','부분손절율','부분손절수량','최대손절율']
+        id = self.params["mainWindow"]["displayConditionTable"]["id"]
+        code = self.params["mainWindow"]["displayConditionTable"]["code"]
+        name = self.params["mainWindow"]["displayConditionTable"]["name"]
+        price = self.params["mainWindow"]["displayConditionTable"]["price"]
+        totalPrice = self.params["mainWindow"]["displayConditionTable"]["totalPrice"]
+        startTime = self.params["mainWindow"]["displayConditionTable"]["startTime"]
+        endTime = self.params["mainWindow"]["displayConditionTable"]["endTime"]
+        profitRate = self.params["mainWindow"]["displayConditionTable"]["profitRate"]
+        profitQtyPercent = self.params["mainWindow"]["displayConditionTable"]["profitQtyPercent"]
+        maxProfitRate = self.params["mainWindow"]["displayConditionTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayConditionTable"]["lossRate"]
+        lossQtyPercent = self.params["mainWindow"]["displayConditionTable"]["lossQtyPercent"]
+        maxLossRate = self.params["mainWindow"]["displayConditionTable"]["maxLossRate"]
+
+        conditionHeaderList = [id, code, name, price, totalPrice, startTime, endTime,
+             profitRate, profitQtyPercent, maxProfitRate, lossRate, lossQtyPercent, maxLossRate]
         self.dataManager.createCSVFile("pats_condition.csv",conditionHeaderList)
 
     def getSavedConditionList(self):
@@ -884,18 +1032,20 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def deleteKiwoomConditions(self):
         if len(self.checkedKiwoomConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 삭제',
-                                                "삭제할 조건을 하나 이상 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.removeCondition,
+                                                       self.moreThanOneConditionForDelete,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             dropCodeList = []
+            id_table = self.params["mainWindow"]["displayKiwwoomConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayKiwwoomConditionTable"]["code"]
             for id in self.checkedKiwoomConditionList:
-                df = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList['ID'] != id]
-                dropDf = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList['ID'] == id]
+                df = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList[id_table] != id]
+                dropDf = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList[id_table] == id]
                 for idx, row in dropDf.iterrows():
-                    dropCodeList.append(row['코드'])
+                    dropCodeList.append(row[code])
             self.autoTrading.deleteKiwoomConditionDf(dropCodeList)
             self.dataManager.removeRows("pats_kiwoom_condition.csv", df)
             self.monitoredKiwoomConditionList = self.getSavedKiwoomConditionList()
@@ -906,28 +1056,41 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
     def editKiwoomCondition(self):
         #self.checkedConditionList 아이템 갯수 확인 1개 아니면 진행하지 않는다. 노티피케이션 보인다.
         if len(self.checkedKiwoomConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
-                                                "수정할 조건을 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.editConditionMsg,
+                                                       self.selectConditionForEdit,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         elif len(self.checkedKiwoomConditionList) > 1 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
-                                                "수정할 조건을 하나만 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.editConditionMsg,
+                                                       self.onlyOneConditionForEdit,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             id = self.checkedKiwoomConditionList[0]
+            id_table = self.params["mainWindow"]["displayKiwwoomConditionTable"]["id"]
             #체크한 아이디와 동일한 id를 가진 조건을 가져와서(df 시리즈) 수정 페이지로 넘긴다.
-            dataRow = self.monitoredKiwoomConditionList[self.monitoredKiwoomConditionList['ID'] == id]
+            dataRow = self.monitoredKiwoomConditionList[self.monitoredKiwoomConditionList[id_table] == id]
             editCondi = editConditionKW.EditConditionKW(self.dataManager, dataRow, self.monitoredKiwoomConditionList,self.conditionListKW)
             self.register_subject_condition(editCondi)
 
     def createKiwoomConditionFile(self):
-        conditionHeaderList = ['ID','코드','조건명','총금액','종목당금액',
-                                   '시작시간','종료시간','부분익절율','부분익절수량','최대익절율',
-                                   '부분손절율','부분손절수량','최대손절율']
+        id = self.params["mainWindow"]["displayKiwoomConditionTable"]["id"]
+        code = self.params["mainWindow"]["displayKiwoomConditionTable"]["code"]
+        name = self.params["mainWindow"]["displayKiwoomConditionTable"]["name"]
+        totalPrice = self.params["mainWindow"]["displayKiwoomConditionTable"]["totalPrice"]
+        price = self.params["mainWindow"]["displayKiwoomConditionTable"]["price"]
+        startTime = self.params["mainWindow"]["displayKiwoomConditionTable"]["startTime"]
+        endTime = self.params["mainWindow"]["displayKiwoomConditionTable"]["endTime"]
+        profitRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["profitRate"]
+        profitQtyPercent = self.params["mainWindow"]["displayKiwoomConditionTable"]["profitQtyPercent"]
+        maxProfitRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["lossRate"]
+        lossQtyPercent = self.params["mainWindow"]["displayKiwoomConditionTable"]["lossQtyPercent"]
+        maxLossRate = self.params["mainWindow"]["displayKiwoomConditionTable"]["maxLossRate"]
+        conditionHeaderList = [id, code, name, totalPrice, price, startTime, endTime,
+             profitRate, profitQtyPercent, maxProfitRate, lossRate, lossQtyPercent, maxLossRate]
         self.dataManager.createCSVFile("pats_kiwoom_condition.csv",conditionHeaderList)
 
     def getSavedKiwoomConditionList(self):
@@ -938,7 +1101,8 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
     def openRegisterAICondition(self):
         #만약 현재 조건이 이미 있으면 마지막열 id가져오고, 아니라면 0으로 한다.
         if len(self.monitoredAIConditionList)>0:
-            lastConditionId =self.monitoredAIConditionList['ID'].iloc[-1]
+            id_table = self.params["mainWindow"]["displayAIConditionTable"]["id"]
+            lastConditionId =self.monitoredAIConditionList[id_table].iloc[-1]
         else:
             lastConditionId = 0
         regCondi = registerAICondition.RegisterAICondition(self.dataManager,lastConditionId,self.stockList,self.monitoredAIConditionList)
@@ -957,18 +1121,20 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def deleteAIConditions(self):
         if len(self.checkedAIConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 삭제',
-                                                "삭제할 조건을 하나 이상 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.removeCondition,
+                                                       self.moreThanOneConditionForDelete,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             dropCodeList = []
+            id_table = self.params["mainWindow"]["displayAIConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayAIConditionTable"]["code"]
             for id in self.checkedAIConditionList:
-                df = self.monitoredAIConditionList.loc[self.monitoredAIConditionList['ID']!=id]
-                dropDf = self.monitoredAIConditionList.loc[self.monitoredAIConditionList['ID']==id]
+                df = self.monitoredAIConditionList.loc[self.monitoredAIConditionList[id_table]!=id]
+                dropDf = self.monitoredAIConditionList.loc[self.monitoredAIConditionList[id_table]==id]
                 for idx,row in dropDf.iterrows():
-                    dropCodeList.append(row['코드'])
+                    dropCodeList.append(row[code])
             self.autoTrading.deleteAIConditionDf(dropCodeList)
             self.dataManager.removeRows("pats_ai_condition.csv",df)
             self.monitoredAIConditionList = self.getSavedAIConditionList()
@@ -978,28 +1144,42 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
     def editAICondition(self):
         #self.checkedConditionList 아이템 갯수 확인 1개 아니면 진행하지 않는다. 노티피케이션 보인다.
         if len(self.checkedAIConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
-                                                "수정할 조건을 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.editConditionMsg,
+                                                       self.selectConditionForEdit,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         elif len(self.checkedAIConditionList) > 1 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 수정',
-                                                "수정할 조건을 하나만 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.editConditionMsg,
+                                                       self.onlyOneConditionForEdit,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             id = self.checkedAIConditionList[0]
+            id_table = self.params["mainWindow"]["displayAIConditionTable"]["id"]
             #체크한 아이디와 동일한 id를 가진 조건을 가져와서(df 시리즈) 수정 페이지로 넘긴다.
-            dataRow = self.monitoredAIConditionList[self.monitoredAIConditionList['ID'] == id]
+            dataRow = self.monitoredAIConditionList[self.monitoredAIConditionList[id_table] == id]
             editCondi = editAICondition.EditCondition(self.dataManager, dataRow, self.monitoredAIConditionList, self.stockList)
             self.register_subject_condition(editCondi)
 
     def createAIConditionFile(self):
-        conditionHeaderList = ['ID', '코드', '종목명', 'AI매매구분', '회당매수액','총금액',
-                                       '시작시간', '종료시간', '부분익절율', '부분익절수량', '최대익절율',
-                                       '부분손절율', '부분손절수량', '최대손절율']
+        id = self.params["mainWindow"]["displayAIConditionTable"]["id"]
+        code = self.params["mainWindow"]["displayAIConditionTable"]["code"]
+        name = self.params["mainWindow"]["displayAIConditionTable"]["name"]
+        buyType = self.params['kiwoomRealTimeData']['AIConditionList']['type']
+        buyAmountPerTime = self.params["mainWindow"]["displayAIConditionTable"]["buyAmountPerTime"]
+        totalPrice = self.params["mainWindow"]["displayAIConditionTable"]["totalPrice"]
+        startTime = self.params["mainWindow"]["displayAIConditionTable"]["startTime"]
+        endTime = self.params["mainWindow"]["displayAIConditionTable"]["endTime"]
+        profitRate = self.params["mainWindow"]["displayAIConditionTable"]["profitRate"]
+        profitQtyPercent = self.params["mainWindow"]["displayAIConditionTable"]["profitQtyPercent"]
+        maxProfitRate = self.params["mainWindow"]["displayAIConditionTable"]["maxProfitRate"]
+        lossRate = self.params["mainWindow"]["displayAIConditionTable"]["lossRate"]
+        lossQtyPercent = self.params["mainWindow"]["displayAIConditionTable"]["lossQtyPercent"]
+        maxLossRate = self.params["mainWindow"]["displayAIConditionTable"]["maxLossRate"]
+        conditionHeaderList = [id, code, name, buyType, buyAmountPerTime, totalPrice, startTime, endTime,
+             profitRate, profitQtyPercent, maxProfitRate, lossRate, lossQtyPercent, maxLossRate]
         self.dataManager.createCSVFile("pats_ai_condition.csv",conditionHeaderList)
 
     def getSavedAIConditionList(self):
@@ -1011,7 +1191,12 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         self.register_subject_condition(regSetting)
 
     def createPiggleDaoMostVotedFile(self):
-        conditionHeaderList = ['코드', '종목명', '예상가', '시종가구분', '예측일']
+        code = self.params["mainWindow"]["createPiggleDaoMostVotedFile"]["code"]
+        name = self.params["mainWindow"]["createPiggleDaoMostVotedFile"]["name"]
+        expectedPrice = self.params["mainWindow"]["createPiggleDaoMostVotedFile"]["expectedPrice"]
+        priceType = self.params["mainWindow"]["createPiggleDaoMostVotedFile"]["priceType"]
+        expectedDate = self.params["mainWindow"]["createPiggleDaoMostVotedFile"]["expectedDate"]
+        conditionHeaderList = [code,name,expectedPrice,priceType,expectedDate]
         self.dataManager.createCSVFile("pats_piggle_dao_most_voted.csv",conditionHeaderList)
 
     def getSavedPiggleDaoMostVotedList(self):
@@ -1025,18 +1210,20 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         # th.start()
 
     def createSettingPiggleDaoMostVotedFile(self):
-        conditionHeaderList = ['적용여부', '매수수량']
+        isAppliedVal = self.params["mainWindow"]["createSettingPiggleDaoMostVotedFile"]["isApplied"]
+        amountVal = self.params["mainWindow"]["createSettingPiggleDaoMostVotedFile"]["amount"]
+        conditionHeaderList = [isAppliedVal, amountVal]
         self.dataManager.createCSVFile("pats_setting_piggle_dao_most_voted.csv",conditionHeaderList)
         isApplied = True
         buyVolume = 0
         df = self.getSavedSettingPiggleDaoMostVotedList()
         for idx, row in df.iterrows():
-            isApplied = row['적용여부']
-            buyVolume = row['매수량']
+            isApplied = row[isAppliedVal]
+            buyVolume = row[amountVal]
             break
         arr = [isApplied, buyVolume]
         df = pd.DataFrame([arr],
-                          columns=['적용여부', '매수량'])
+                          columns=[isAppliedVal, amountVal])
         self.dataManager.updateCSVFile('pats_setting_piggle_dao_most_voted.csv', df)
 
     def getSavedSettingPiggleDaoMostVotedList(self):
@@ -1044,10 +1231,11 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         return df
 
     def favoriteButton(self):
+        favorite = self.params["mainWindow"]["favoriteButton"]["favorite"]
         #만약 현재 선택된 종목이 즐겨찾기에 있을 경우
         if len(self.favoriteList)>0:
             for idx,row in self.favoriteList.iterrows():
-                if row['즐겨찾기'] == self.selectedStock:
+                if row[favorite] == self.selectedStock:
                     isFavorite=True
                     break
                 else :
@@ -1063,15 +1251,18 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
         self.displayFavoriteList()
 
     def addFavorite(self):
-        df = pd.DataFrame([self.selectedStock],columns=['즐겨찾기'])
+        favorite = self.params["mainWindow"]["favoriteButton"]["favorite"]
+        df = pd.DataFrame([self.selectedStock],columns=[favorite])
         self.dataManager.appendCSVFile("pats_favorite.csv",df)
 
     def removeFavorite(self):
-        df = self.favoriteList.loc[self.favoriteList['즐겨찾기'] != self.selectedStock]
+        favorite = self.params["mainWindow"]["favoriteButton"]["favorite"]
+        df = self.favoriteList.loc[self.favoriteList[favorite] != self.selectedStock]
         self.dataManager.removeRows("pats_favorite.csv", df)
 
     def createFavoriteFile(self):
-        favoriteHeader = ['즐겨찾기']
+        favorite = self.params["mainWindow"]["favoriteButton"]["favorite"]
+        favoriteHeader = [favorite]
         self.dataManager.createCSVFile("pats_favorite.csv", favoriteHeader)
 
     def getSavedFavoriteList(self):
@@ -1080,28 +1271,30 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def stopAllCondition(self):
         self.autoTrading.stopAllCondition()
-        choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                   "모든 조건 자동매매를 중지합니다. ",
+        choice = QtWidgets.QMessageBox.information(self,self.stopCondition,
+                                                   self.stopAllConditionMsg,
                                                    QtWidgets.QMessageBox.Ok)
         if choice == QtWidgets.QMessageBox.Ok:
             pass
 
     def stopSelectedCondition(self):
         if len(self.checkedConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                "멈출 조건을 하나 이상 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                self.selectConditionForStop,
                                                 QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             dropCodeList = []
+            id_table = self.params["mainWindow"]["displayConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayConditionTable"]["code"]
             for id in self.checkedConditionList:
-                dropDf = self.monitoredConditionList.loc[self.monitoredConditionList['ID']==id]
+                dropDf = self.monitoredConditionList.loc[self.monitoredConditionList[id_table]==id]
                 for idx,row in dropDf.iterrows():
-                    dropCodeList.append(row['코드'])
+                    dropCodeList.append(row[code])
             self.autoTrading.stopSelectedCondition(dropCodeList)
-            choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                       "선택한 조건 자동매매를 중지합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                       self.stoppedCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -1110,20 +1303,22 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def startSelectedCondition(self):
         if len(self.checkedConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 시작',
-                                                "시작할 조건을 하나 이상 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self,self.startCondition,
+                                                self.selectConditionForStart,
                                                 QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             codeList = []
+            id_table = self.params["mainWindow"]["displayConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayConditionTable"]["code"]
             for id in self.checkedConditionList:
-                startDf = self.monitoredConditionList.loc[self.monitoredConditionList['ID']==id]
+                startDf = self.monitoredConditionList.loc[self.monitoredConditionList[id_table]==id]
                 for idx,row in startDf.iterrows():
-                    codeList.append(row['코드'])
+                    codeList.append(row[code])
             self.autoTrading.startSelectedCondition(codeList)
-            choice = QtWidgets.QMessageBox.information(self, '조건 시작',
-                                                       "선택한 조건 자동매매를 시작합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.startCondition,
+                                                       self.startedCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -1133,28 +1328,30 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def stopAllKiwoomCondition(self):
         self.autoTrading.stopAllKiwoomCondition()
-        choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                   "모든 조건 자동매매를 중지합니다. ",
+        choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                   self.stopAllConditionMsg,
                                                    QtWidgets.QMessageBox.Ok)
         if choice == QtWidgets.QMessageBox.Ok:
             pass
 
     def stopSelectedKiwoomCondition(self):
         if len(self.checkedKiwoomConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                "멈출 조건을 하나 이상 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                       self.selectConditionForStop,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             dropCodeList = []
+            id_table = self.params["mainWindow"]["displayKiwoomConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayKiwoomConditionTable"]["code"]
             for id in self.checkedKiwoomConditionList:
-                dropDf = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList['ID'] == id]
+                dropDf = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList[id_table] == id]
                 for idx, row in dropDf.iterrows():
-                    dropCodeList.append(row['코드'])
+                    dropCodeList.append(row[code])
             self.autoTrading.stopSelectedKiwoomCondition(dropCodeList)
-            choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                       "선택한 조건 자동매매를 중지합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                       self.stoppedCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -1163,20 +1360,22 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def startSelectedKiwoomCondition(self):
         if len(self.checkedKiwoomConditionList) == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 시작',
-                                                "시작할 조건을 하나 이상 선택해주세요. ",
-                                                QtWidgets.QMessageBox.Ok)
+            choice = QtWidgets.QMessageBox.information(self, self.startCondition,
+                                                       self.selectConditionForStart,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             codeList = []
+            id_table = self.params["mainWindow"]["displayKiwoomConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayKiwoomConditionTable"]["code"]
             for id in self.checkedKiwoomConditionList:
-                startDf = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList['ID'] == id]
+                startDf = self.monitoredKiwoomConditionList.loc[self.monitoredKiwoomConditionList[id_table] == id]
                 for idx, row in startDf.iterrows():
-                    codeList.append(row['코드'])
+                    codeList.append(row[code])
             self.autoTrading.startSelectedKiwoomCondition(codeList)
-            choice = QtWidgets.QMessageBox.information(self, '조건 시작',
-                                                       "선택한 조건 자동매매를 시작합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.startCondition,
+                                                       self.startedCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -1185,28 +1384,30 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def stopAllAICondition(self):
         self.autoTrading.stopAllAICondition()
-        choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                   "모든 조건 자동매매를 중지합니다. ",
+        choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                   self.stopAllConditionMsg,
                                                    QtWidgets.QMessageBox.Ok)
         if choice == QtWidgets.QMessageBox.Ok:
             pass
 
     def stopSelectedAICondition(self):
         if len(self.checkedAIConditionList) == 0:
-            choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                       "멈출 조건을 하나 이상 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                       self.selectConditionForStop,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             dropCodeList = []
+            id_table = self.params["mainWindow"]["displayAIConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayAIConditionTable"]["code"]
             for id in self.checkedAIConditionList:
-                dropDf = self.monitoredAIConditionList.loc[self.monitoredAIConditionList['ID'] == id]
+                dropDf = self.monitoredAIConditionList.loc[self.monitoredAIConditionList[id_table] == id]
                 for idx, row in dropDf.iterrows():
-                    dropCodeList.append(row['코드'])
+                    dropCodeList.append(row[code])
             self.autoTrading.stopSelectedAICondition(dropCodeList)
-            choice = QtWidgets.QMessageBox.information(self, '조건 중지',
-                                                       "선택한 조건 자동매매를 중지합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.stopCondition,
+                                                       self.stoppedCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -1215,20 +1416,22 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 
     def startSelectedAICondition(self):
         if len(self.checkedAIConditionList) == 0:
-            choice = QtWidgets.QMessageBox.information(self, '조건 시작',
-                                                       "시작할 조건을 하나 이상 선택해주세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.startCondition,
+                                                       self.selectConditionForStart,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
         else:
             codeList = []
+            id_table = self.params["mainWindow"]["displayAIConditionTable"]["id"]
+            code = self.params["mainWindow"]["displayAIConditionTable"]["code"]
             for id in self.checkedAIConditionList:
-                startDf = self.monitoredAIConditionList.loc[self.monitoredAIConditionList['ID'] == id]
+                startDf = self.monitoredAIConditionList.loc[self.monitoredAIConditionList[id_table] == id]
                 for idx, row in startDf.iterrows():
-                    codeList.append(row['코드'])
+                    codeList.append(row[code])
             self.autoTrading.startSelectedAICondition(codeList)
-            choice = QtWidgets.QMessageBox.information(self, '조건 시작',
-                                                       "선택한 조건 자동매매를 시작합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.startCondition,
+                                                       self.startedCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -1250,8 +1453,10 @@ class MainWindow(QMainWindow, ConditionRegistration.Observer, observer.Observer,
 class InstallAPIWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        choice = QtWidgets.QMessageBox.information(self,'키움 증권 API 설치',
-                                               "키움 증권 Open API 설치 완료 후 다시 시작하세요. ",
+        installKWAPI = self.msg['installKWAPI']
+        restartAfterKWAPI = self.msg['restartAfterKWAPI']
+        choice = QtWidgets.QMessageBox.information(self,installKWAPI,
+                                               restartAfterKWAPI,
                                                QtWidgets.QMessageBox.Ok)
         if choice == QtWidgets.QMessageBox.Ok:
             pass

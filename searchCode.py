@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -16,8 +17,10 @@ class SearchCode(QtWidgets.QDialog, codeSearch.Subject):
         for i in self.stockList:
             self.tv_searchResult.addItem(i)
         self.et_searchCode.returnPressed.connect(self.searchButtonClicked)
-        self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
-        self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
+        confirm = self.msg['button']['confirm']
+        cancel = self.msg['button']['cancel']
+        self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Ok).setText(confirm)
+        self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Cancel).setText(cancel)
         self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.confirm)
         self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Ok).setDefault(False)
         self.bts_searchCode.button(QtWidgets.QDialogButtonBox.Cancel).setDefault(False)

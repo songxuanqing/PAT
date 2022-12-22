@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['main.py'],
+    ['–key=novarandnovarand', 'main.py'],
     pathex=[],
     binaries=[('OpenAPISetup.exe', '.')],
     datas=[('star-yellow.png', '.'), ('star-blank.png', '.'), ('pigicon.ico', '.'), ('main.ui', '.'), ('register_ai_condition.ui', '.'), ('register_dao_condition.ui', '.'), ('register_kiwoom_condition.ui', '.'), ('main.ui', '.'), ('searchCode.ui', '.'), ('setting_piggle_dao_most_voted.ui', '.')],

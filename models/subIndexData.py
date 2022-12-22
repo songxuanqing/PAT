@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from ta.momentum import RSIIndicator, StochasticOscillator
 from ta.trend import IchimokuIndicator, MACD, SMAIndicator
 from ta.volatility import BollingerBands

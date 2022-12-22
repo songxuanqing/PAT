@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from threading import Thread
 from time import sleep
 import interface.observerOrderQueue as observer
@@ -34,8 +35,8 @@ class OrderQueue(observer.Subject):
             order = self.list.pop()
             returnCode = self.kiwoom.dynamicCall(
                 "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                [order.사용자구분명, order.화면번호, order.계좌번호, order.주문유형,
-                 order.종목코드, order.주문수량, order.주문가격, order.거래구분, order.원주문번호])
+                [order.sRQName, order.sScreenNo, order.sAccNo, order.nOrderType,
+                 order.sCode, order.nQty, order.nPrice, order.sHogaGb, order.sOrgOrderNo])
             if returnCode != 0:
                 print("")
             else:

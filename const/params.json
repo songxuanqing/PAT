@@ -1,0 +1,232 @@
+{
+  "mainWindow": {
+    "setup": {
+      "selectedStockInit": "005930 : 삼성전자",
+      "selectedCandleInit": "1 일"
+    },
+    "displayFavoriteList": {
+      "rowName": "즐겨찾기"
+    },
+    "displayChejanTable": {
+      "code": "종목코드",
+      "name": "종목명",
+      "type": "매매구분",
+      "price": "매매가",
+      "qty": "매매량",
+      "currentProfitRate": "현재수익율",
+      "profitRate": "부분익절율",
+      "maxProfitRate": "최대익절율",
+      "lossRate": "부분손절율",
+      "maxLossRate": "최대손전율"
+    },
+    "displayRealPriceTable": {
+      "price": "현재가",
+      "compareToYesterday": "전일대비",
+      "roc": "등락율",
+      "accumulatedVolume": "누적거래량",
+      "start": "시가",
+      "high": "고가",
+      "low": "저가"
+    },
+    "displayConditionTable": {
+      "checkbox": "",
+      "id": "ID",
+      "code": "코드",
+      "name": "종목명",
+      "type": "매매구분",
+      "price": "매수가",
+      "totalPrice": "총금액",
+      "startTime": "시작시간",
+      "endTime": "종료시간",
+      "profitRate": "부분익절율",
+      "profitQtyPercent": "부분익절수량",
+      "maxProfitRate": "최대익절율",
+      "lossRate": "부분손절율",
+      "lossQtyPercent": "부분손절수량",
+      "maxLossRate": "최대손절율"
+    },
+    "displayKiwoomConditionTable": {
+      "checkbox": "",
+      "id": "ID",
+      "code": "조건코드",
+      "name": "조건명",
+      "totalPrice": "총금액",
+      "price": "종목당금액",
+      "startTime": "시작시간",
+      "endTime": "종료시간",
+      "profitRate": "부분익절율",
+      "profitQtyPercent": "부분익절수량",
+      "maxProfitRate": "최대익절율",
+      "lossRate": "부분손절율",
+      "lossQtyPercent": "부분손절수량",
+      "maxLossRate": "최대손절율"
+    },
+    "displayAIConditionTable": {
+      "checkbox": "",
+      "id": "ID",
+      "code": "코드",
+      "name": "종목명",
+      "type": "구분",
+      "buyAmountPerTime": "회당매수액",
+      "totalPrice": "총금액",
+      "startTime": "시작시간",
+      "endTime": "종료시간",
+      "profitRate": "부분익절율",
+      "profitQtyPercent": "부분익절수량",
+      "maxProfitRate": "최대익절율",
+      "lossRate": "부분손절율",
+      "lossQtyPercent": "부분손절수량",
+      "maxLossRate": "최대손절율"
+    },
+    "subIndex": {
+      "mavg5": "5-이평선",
+      "mavg10": "10-이평선",
+      "mavg20": "20-이평선",
+      "mavg60": "60-이평선",
+      "rsi": "RSI",
+      "sc": "스토캐스틱",
+      "macd": "MACD",
+      "ilmock": "일목균형표",
+      "bb": "BB"
+    },
+    "drawChart": {
+      "mavg": "이평선",
+      "candle": {
+        "min": "분",
+        "day": "일",
+        "week": "주",
+        "month": "달"
+      },
+      "range": {
+        "volume": "거래량",
+        "span1": "스팬 1",
+        "span2": "스팬 2",
+        "stdLine": "기준선",
+        "conversionLine": "전환선",
+        "highBand": "상단밴드",
+        "midLine": "중심선",
+        "lowBand": "하단밴드"
+      }
+    },
+    "createLatestVariablesFile": {
+      "code": "종목",
+      "candle": "캔들",
+      "subIndex": "보조지표"
+    },
+    "createPiggleDaoMostVotedFile": {
+      "code": "코드",
+      "name": "종목명",
+      "expectedPrice": "예상기",
+      "priceType": "시종가구분",
+      "expectedDate": "예측일"
+    },
+    "createSettingPiggleDaoMostVotedFile": {
+      "isApplied": "적용여부",
+      "amount": "매수수량"
+    },
+    "favoriteButton": {
+      "favorite": "즐겨찾기"
+    }
+  },
+  "kiwoomRealTimeData": {
+    "conditionList": {
+      "code": "코드",
+      "name": "종목명",
+      "buy": "매수",
+      "sell": "매도"
+    },
+    "kiwoomConditionList": {
+      "condiCode": "조건코드",
+      "condiName": "조건명",
+      "code": "코드"
+    },
+    "AIConditionList": {
+      "code": "코드",
+      "type": "AI매매구분",
+      "dayBuy": "일봉 매매",
+      "minBuy": "분봉 매매",
+      "day": "일",
+      "min": "분"
+    },
+    "piggleDaoMostVotedList": {
+      "code": "코드",
+      "open": "시가",
+      "close": "종가"
+    },
+    "updateOrderLog": {
+      "tab": "매매방식: ",
+      "name": "종목명: ",
+      "type": "주문유형: ",
+      "price": "주문가격: ",
+      "qty": "주문수량: ",
+      "currentProfitRate": "현재수익율: ",
+      "targetProfitRate": "목표익절율: ",
+      "targetLossRate": "목표손절율: "
+    },
+    "chejan": {
+      "chejaned": "체결"
+    },
+    "order": {
+      "currentPriceSell": "현재가매도",
+      "currentPriceBuy": "현재가매수"
+    }
+  },
+  "kiwoomData": {
+    "get_account_evaluation_balance": {
+      "accountNum": "계좌번호",
+      "password": "비밀번호",
+      "inputPassword": "비밀번호입력매체구분",
+      "searchType": "조회구분"
+    },
+    "request_candle_data": {
+      "typeMin": "분",
+      "typeDay": "일",
+      "typeWeek": "주",
+      "typeMonth": "달",
+      "code": "종목코드",
+      "tick": "틱범위",
+      "stdDate": "기준일자",
+      "editedPrice": "수정주가구분",
+      "endDate": "끝일자",
+      "requestMin": "주식분봉차트조회요청",
+      "requestDay": "주식일봉차트조회요청",
+      "requestWeek": "주식주봉차트조회요청",
+      "requestMonth": "주식월봉차트조회요청",
+      "requestCandle": "봉차트조회요청",
+      "chejanTime": "체결시간",
+      "date": "일자",
+      "open": "시가",
+      "low": "저가",
+      "high": "고가",
+      "volume": "거래량",
+      "currentPrice": "현재가",
+      "requestAccount": "계좌평가잔고내역요청",
+      "No": "No",
+      "accountCode": "코드",
+      "evalAmount": "평가금액",
+      "profitRate": "수익률(%)",
+      "buyPrice": "매입가",
+      "buyAmount": "매입금액",
+      "holdQty": "보유수량",
+      "canSellQty": "매매가능수량",
+      "totalBuyAmount": "총매입금액",
+      "totalEvalAmount": "총평가금액",
+      "totalEvalProfitAmount": "총평가손익금액",
+      "totalProfitRate": "총수익률(%)",
+      "codeNum": "종목번호",
+      "codeName": "종목명",
+      "evalProfit": "평가손익"
+    }
+  },
+  "candleList": {
+    "min1": "1 분",
+    "min3": "3 분",
+    "min5": "5 분",
+    "min10": "10 분",
+    "min30": "30 분",
+    "min60": "60 분",
+    "day1": "1 일",
+    "week1": "1 주",
+    "month1": "1 달"
+  }
+}

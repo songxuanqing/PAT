@@ -1,23 +1,30 @@
+#-*- coding: utf-8 -*-
 from PyQt5 import QtWidgets, uic
 import pandas as pd
 import interface.conditionRegistration as ConditionRegistration
 import models.database as DataManager
+import openJson
 
 class SettingPiggleDaoMostVoted(QtWidgets.QDialog, ConditionRegistration.Subject):
     def __init__(self, settingPiggleDaoMostVoted):
         super().__init__()
+        self.msg, self.params = openJson.getJsonFiles()
+        isAppliedVal = self.params["mainWindow"]["createSettingPiggleDaoMostVotedFile"]["isApplied"]
+        amountVal = self.params["mainWindow"]["createSettingPiggleDaoMostVotedFile"]["amount"]
+
         self.settingDialog = uic.loadUi("setting_piggle_dao_most_voted.ui", self)  # ui 파일 불러오기
         for idx, row in settingPiggleDaoMostVoted.iterrows():
-            isApplied = row['적용여부']
-            buyVoulume = row['매수량']
+            isApplied = row[isAppliedVal]
+            buyVoulume = row[isAppliedVal]
             if isApplied:
                 self.rbt_apply.setChecked(True)
             else:
                 self.rbt_noApply.setChecked(True)
             self.et_buyVolume.setValue(buyVoulume)
-
-        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
-        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
+        confirm = self.msg['button']['confirm']
+        cancel = self.msg['button']['cancel']
+        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText(confirm)
+        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText(cancel)
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.closeWindow)
         self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.saveCondition)
         self.settingDialog.show()
@@ -26,6 +33,9 @@ class SettingPiggleDaoMostVoted(QtWidgets.QDialog, ConditionRegistration.Subject
         self.close()
 
     def saveCondition(self):
+        isAppliedVal = self.params["mainWindow"]["createSettingPiggleDaoMostVotedFile"]["isApplied"]
+        amountVal = self.params["mainWindow"]["createSettingPiggleDaoMostVotedFile"]["amount"]
+
         dataManager = DataManager.Database()
         isApplied = True
         if self.rbt_apply.isChecked():
@@ -35,7 +45,7 @@ class SettingPiggleDaoMostVoted(QtWidgets.QDialog, ConditionRegistration.Subject
         buyVolume = self.et_buyVolume.value()
         arr = [isApplied, buyVolume]
         df = pd.DataFrame([arr],
-                          columns=['적용여부', '매수량'])
+                          columns=[isAppliedVal, amountVal])
         dataManager.updateCSVFile('pats_setting_piggle_dao_most_voted.csv', df)
         self.notify_observers_condition(df)
         self.closeWindow()

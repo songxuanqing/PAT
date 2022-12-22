@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from PyQt5 import QtWidgets, uic
 from PyQt5 import QtGui
 from PyQt5 import QtCore
@@ -5,17 +6,21 @@ import pandas as pd
 import interface.conditionRegistration as ConditionRegistration
 import interface.codeSearch as codeSearch
 import searchCode
+import openJson
 
 class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSearch.Observer):
     def __init__(self,dataManager,lastCondtiontionId,stockList,monitoredConditionList):
         super().__init__()
+        self.msg, self.params = openJson.getJsonFiles()
         self.stockList = stockList
         self.monitoredConditionList = monitoredConditionList
         self.lastCondtiontionId = lastCondtiontionId
         self.registerConditionDialog = uic.loadUi("register_dao_condition.ui", self)  # ui 파일 불러오기
         self.bt_searchCode.clicked.connect(self.clickSearch)
-        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
-        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
+        confirm = self.msg['button']['confirm']
+        cancel = self.msg['button']['cancel']
+        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Ok).setText(confirm)
+        self.bts_oneStock.button(QtWidgets.QDialogButtonBox.Cancel).setText(cancel)
         #정규식 예외처리
         regexCode = QtCore.QRegExp("[0-9_]+")
         validatorCode = QtGui.QRegExpValidator(regexCode)
@@ -44,6 +49,29 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
         self.close()
 
     def saveCondition(self,dataManager):
+        idVal = self.params["mainWindow"]["displayConditionTable"]["id"]
+        codeVal = self.params["mainWindow"]["displayConditionTable"]["code"]
+        nameVal = self.params["mainWindow"]["displayConditionTable"]["name"]
+        priceVal = self.params["mainWindow"]["displayConditionTable"]["price"]
+        totalPriceVal = self.params["mainWindow"]["displayConditionTable"]["totalPrice"]
+        startTimeVal = self.params["mainWindow"]["displayConditionTable"]["startTime"]
+        endTimeVal = self.params["mainWindow"]["displayConditionTable"]["endTime"]
+        profitRateVal = self.params["mainWindow"]["displayConditionTable"]["profitRate"]
+        profitQtyPercentVal = self.params["mainWindow"]["displayConditionTable"]["profitQtyPercent"]
+        maxProfitRateVal = self.params["mainWindow"]["displayConditionTable"]["maxProfitRate"]
+        lossRateVal = self.params["mainWindow"]["displayConditionTable"]["lossRate"]
+        lossQtyPercentVal = self.params["mainWindow"]["displayConditionTable"]["lossQtyPercent"]
+        maxLossRateVal = self.params["mainWindow"]["displayConditionTable"]["maxLossRate"]
+
+        self.saveCondition = self.msg['saveCondition']
+        self.nullCode = self.msg['nullCode']
+        self.alreadyRegistered = self.msg['alreadyRegistered']
+        self.notZeroForBuyPrice = self.msg['notZeroForBuyPrice']
+        self.notZeroForTotalBuyPrice = self.msg['notZeroForTotalBuyPrice']
+        self.endLaterThanStart = self.msg['endLaterThanStart']
+        self.maxMoreThanProfit = self.msg['maxMoreThanProfit']
+        self.maxMoreThanLoss = self.msg['maxMoreThanLoss']
+
         id = self.lastCondtiontionId + 1
         stockCode = self.et_code.text()
         stockName = self.tv_codeName.text()
@@ -61,56 +89,56 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
 
         isAlreadyRegistered = False
         for idx,row in self.monitoredConditionList.iterrows():
-            if row['코드'] == stockCode:
+            if row[codeVal] == stockCode:
                 isAlreadyRegistered = True
             else:
                 isAlreadyRegistered = False
 
         if stockCode == "":
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "종목 코드를 입력하세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.nullCode,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif isAlreadyRegistered:
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "이미 자동매매로 등록된 종목입니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.alreadyRegistered,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
-        elif buyPrice == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                "매수가는 0보다 커야합니다. ",
-                                                QtWidgets.QMessageBox.Ok)
+        elif buyPrice == 0:
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.notZeroForBuyPrice,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
-        elif totalBuyAmount == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                "총 금액은 0보다 커야합니다. ",
-                                                QtWidgets.QMessageBox.Ok)
+        elif totalBuyAmount == 0:
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.notZeroForTotalBuyPrice,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif self.et_buyStartTime.dateTime() > self.et_buyEndTime.dateTime():
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "시작 시간은 끝시간보다 앞서야합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.endLaterThanStart,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif profitRate >= maxProfitRate:
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "최대익절율은 부분익절율보다 커야합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.maxMoreThanProfit,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif maxLossRate >= lossRate:
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "최대손절율은 부분손절율보다 커야합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.maxMoreThanLoss,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -120,9 +148,9 @@ class RegisterCondition(QtWidgets.QDialog, ConditionRegistration.Subject, codeSe
                    buyStartTime, buyEndTime, profitRate, profitRateVolume, maxProfitRate,
                    lossRate, lossRateVolume, maxLossRate]
             df = pd.DataFrame([arr],
-                              columns=['ID', '코드', '종목명', '매수가', '총금액',
-                                       '시작시간', '종료시간', '부분익절율', '부분익절수량', '최대익절율',
-                                       '부분손절율', '부분손절수량', '최대손절율'])
+                              columns=[idVal,codeVal,nameVal,priceVal,totalPriceVal,
+                                       startTimeVal,endTimeVal,profitRateVal,profitQtyPercentVal,
+                                       maxProfitRateVal,lossRateVal,lossQtyPercentVal,maxLossRateVal])
             # df['코드'] = df['코드'].apply('{}'.format)
             dataManager.appendCSVFile('pats_condition.csv', df)
             self.notify_observers_condition(df)

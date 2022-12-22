@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from PyQt5 import QtWidgets, uic
 from PyQt5 import QtGui
 from PyQt5 import QtCore
@@ -12,9 +13,10 @@ class RegisterConditionKW(QtWidgets.QDialog, ConditionRegistration.Subject):
         self.lastConditionId = lastCondtiontionId
         self.registerConditionDialog = uic.loadUi("register_kiwoom_condition.ui", self)  # ui 파일 불러오기
         self.cb_conditionList.addItems(self.conditionList)
-
-        self.bts_oneCondition.button(QtWidgets.QDialogButtonBox.Ok).setText("확인")
-        self.bts_oneCondition.button(QtWidgets.QDialogButtonBox.Cancel).setText("취소")
+        confirm = self.msg['button']['confirm']
+        cancel = self.msg['button']['cancel']
+        self.bts_oneCondition.button(QtWidgets.QDialogButtonBox.Ok).setText(confirm)
+        self.bts_oneCondition.button(QtWidgets.QDialogButtonBox.Cancel).setText(cancel)
         #정규식 예외처리
         self.et_profitRate.setPrefix('+ ')
         self.et_maxProfitRate.setPrefix('+ ')
@@ -30,6 +32,29 @@ class RegisterConditionKW(QtWidgets.QDialog, ConditionRegistration.Subject):
         self.close()
 
     def saveCondition(self,dataManager):
+        idVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["id"]
+        codeVal = self.params["mainWindow"]["displayConditionTable"]["code"]
+        nameVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["name"]
+        totalPriceVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["totalPrice"]
+        priceVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["price"]
+        startTimeVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["startTime"]
+        endTimeVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["endTime"]
+        profitRateVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["profitRate"]
+        profitQtyPercentVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["profitQtyPercent"]
+        maxProfitRateVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["maxProfitRate"]
+        lossRateVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["lossRate"]
+        lossQtyPercentVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["lossQtyPercent"]
+        maxLossRateVal = self.params["mainWindow"]["displayKiwoomConditionTable"]["maxLossRate"]
+
+        self.saveCondition = self.msg['saveCondition']
+        self.selectCondiCode = self.msg['selectCondiCode']
+        self.alreadyRegisteredCondition = self.msg['alreadyRegisteredCondition']
+        self.noZeroForBuyPricePerStock = self.msg['noZeroForBuyPricePerStock']
+        self.notZeroForTotalBuyPrice = self.msg['notZeroForTotalBuyPrice']
+        self.endLaterThanStart = self.msg['endLaterThanStart']
+        self.maxMoreThanProfit = self.msg['maxMoreThanProfit']
+        self.maxMoreThanLoss = self.msg['maxMoreThanLoss']
+
         id = self.lastConditionId+1
         selectedConditionStr = self.cb_conditionList.currentText().split(" : ")
         selectedConditionId = str(selectedConditionStr[0])
@@ -48,56 +73,56 @@ class RegisterConditionKW(QtWidgets.QDialog, ConditionRegistration.Subject):
 
         isAlreadyRegistered = False
         for idx,row in self.monitoredConditionList.iterrows():
-            if row['코드'] == selectedConditionId:
+            if row[codeVal] == selectedConditionId:
                 isAlreadyRegistered = True
             else:
                 isAlreadyRegistered = False
 
         if self.cb_conditionList.currentText() == "":
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "조건을 선택하세요. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.selectCondiCode,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif isAlreadyRegistered:
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "이미 자동매매로 등록된 조건입니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.alreadyRegisteredCondition,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
-        elif buyPricePerStock == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                "종목당 매수가는 0보다 커야합니다. ",
-                                                QtWidgets.QMessageBox.Ok)
+        elif buyPricePerStock == 0:
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.noZeroForBuyPricePerStock,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
-        elif totalBuyAmount == 0 :
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                "총 금액은 0보다 커야합니다. ",
-                                                QtWidgets.QMessageBox.Ok)
+        elif totalBuyAmount == 0:
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.notZeroForTotalBuyPrice,
+                                                       QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif self.et_buyStartTime.dateTime() > self.et_buyEndTime.dateTime():
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "시작 시간은 끝시간보다 앞서야합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.endLaterThanStart,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif profitRate >= maxProfitRate:
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "최대익절율은 부분익절율보다 커야합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.maxMoreThanProfit,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
 
         elif maxLossRate >= lossRate:
-            choice = QtWidgets.QMessageBox.information(self, '조건 저장',
-                                                       "최대손절율은 부분손절율보다 커야합니다. ",
+            choice = QtWidgets.QMessageBox.information(self, self.saveCondition,
+                                                       self.maxMoreThanLoss,
                                                        QtWidgets.QMessageBox.Ok)
             if choice == QtWidgets.QMessageBox.Ok:
                 pass
@@ -107,9 +132,9 @@ class RegisterConditionKW(QtWidgets.QDialog, ConditionRegistration.Subject):
                    buyStartTime, buyEndTime, profitRate, profitRateVolume, maxProfitRate,
                    lossRate, lossRateVolume, maxLossRate]
             df = pd.DataFrame([arr],
-                              columns=['ID', '코드', '조건명', '총금액', '종목당금액',
-                                       '시작시간', '종료시간', '부분익절율', '부분익절수량', '최대익절율',
-                                       '부분손절율', '부분손절수량', '최대손절율'])
+                              columns=[idVal, codeVal, nameVal, totalPriceVal, priceVal,
+                                       startTimeVal,endTimeVal,profitRateVal,profitQtyPercentVal,
+                                       maxProfitRateVal,lossRateVal,lossQtyPercentVal,maxLossRateVal])
             # df['코드'] = df['코드'].apply('{}'.format)
             dataManager.appendCSVFile('pats_kiwoom_condition.csv', df)
             self.notify_observers_condition(df)  # df = condition

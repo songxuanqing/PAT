@@ -1,8 +1,8 @@
-
+#-*- coding: utf-8 -*-
 class FavoriteList():
     arr = []
     def __init__(self):
-        print("생성자")
+        print("")
 
     def setList(self, array):
         self.arr = array
